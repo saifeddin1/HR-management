@@ -9,7 +9,6 @@ const ContractSchema = Schema(
         hoursNumber: Number,
         startDate: Date,
         endDate: Date,
-        
     },
     { timestamps: true }
 );

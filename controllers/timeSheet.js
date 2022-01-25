@@ -6,4 +6,3 @@ module.exports.getOneTimeSheet = factory.getOne(TimeSheet);
 module.exports.createNewTimeSheet = factory.createOne(TimeSheet);
 module.exports.updateTimeSheet = factory.updateOne(TimeSheet);
 module.exports.deleteTimeSheet = factory.deleteOne(TimeSheet);
-
