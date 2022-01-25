@@ -4,6 +4,7 @@ const apiVersion = '/api/v1'
 
 router.use(`${apiVersion}/files`, require('./api/files'));
 router.use(`${apiVersion}/contracts`, require('./api/contracts'));
+router.use(`${apiVersion}/salaries`, require('./api/salaries'));
 router.use(`${apiVersion}/interviews`, require('./api/interviews'));
 router.use(`${apiVersion}/profiles`, require('./api/profiles'));
 router.use(`${apiVersion}/timeOffs`, require('./api/timeOffs'));

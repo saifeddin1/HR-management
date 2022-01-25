@@ -8,7 +8,8 @@ const ContractSchema = Schema(
         contractType: String,
         hoursNumber: Number,
         startDate: Date,
-        endDate: Date
+        endDate: Date,
+        
     },
     { timestamps: true }
 );
