@@ -7,22 +7,22 @@ const fileSchema = Schema(
     {
         userRef: String,
         userId: String,
-        contracts: [{
+        contracts: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Contract'
-        }],
-        timeSheets: [{
+        },
+        timeSheet: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'TimeSheet'
-        }],
+        },
         timeOffs: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: 'TimeOff'
         }],
-        profiles: [{
+        profile: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Profile'
-        }],
+        },
         interviews: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Interview'
