@@ -6,13 +6,14 @@ const connectDB = require('./models/mongoose');
 const routes = require('./routes');
 
 // Make all variables from our .env file available in our process
-dotenv.config({ path: '.env.example' });
+dotenv.config({ path: '.env' });
 
 // Init express server
 const app = express();
 
 // Connect to MongoDB.
 connectDB();
+
 
 // Middlewares & configs setup
 app.use(logger('dev'));

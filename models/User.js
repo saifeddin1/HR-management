@@ -22,7 +22,7 @@ const userSchema = Schema(
 /**
  * Password hash middleware.
  */
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   const user = this;
   if (user.isModified('password')) {
     const salt = await bcrypt.genSalt(10);
