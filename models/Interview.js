@@ -9,12 +9,8 @@ const interviewSchema = Schema(
         fileLastInterview: String,
         history: String,
         certifications: String,
-        trainingsExpectations: [{ training: { type: String, required: false } }],
-        createdAt: {
-            type: Date,
-            default: Date.now()
-        },
-        updatedAt: Date,
+        trainingsExpectations: [{ training: { type: String, required: false } }]
+
     },
     { timestamps: true }
 );

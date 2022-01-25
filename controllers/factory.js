@@ -5,7 +5,7 @@ const getAll = (Model) =>
             const objects = await Model.find({})
             res.status(200).json({
                 response: objects,
-                message: `${Model.modelName}s retrieved`
+                message: objects?.length > 0 ? `${Model.modelName}s retrieved` : `No ${Model.modelName}s found`
             })
         } catch (error) {
             return res.status(400).send(e);

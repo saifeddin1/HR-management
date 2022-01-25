@@ -7,12 +7,7 @@ const timeOffSchema = Schema(
     {
         startDate: Date,
         endDate: Date,
-        status: String,
-        createdAt: {
-            type: Date,
-            default: Date.now()
-        },
-        UpdatedAt: Date
+        status: String
     },
     { timestamps: true }
 );

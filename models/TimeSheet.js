@@ -6,12 +6,7 @@ const { Schema } = mongoose;
 const timeSheetSchema = Schema(
     {
         startDate: Date,
-        endDate: Date,
-        createdAt: {
-            type: Date,
-            default: Date.now()
-        },
-        UpdatedAt: String
+        endDate: Date
     },
     { timestamps: true }
 );

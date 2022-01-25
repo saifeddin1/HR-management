@@ -2,7 +2,7 @@ const express = require('express');
 const logger = require('morgan');
 const dotenv = require('dotenv');
 const expressStatusMonitor = require('express-status-monitor');
-const connectDB = require('./models/mongoose');
+const connectDB = require('./config/mongoose');
 const routes = require('./routes');
 
 // Make all variables from our .env file available in our process

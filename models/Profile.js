@@ -8,12 +8,8 @@ const profileSchema = Schema(
         position: String,
         departement: String,
         proEmail: { type: String, unique: true },
-        image: String,
-        createdAt: {
-            type: Date,
-            default: Date.now()
-        },
-        UpdatedAt: Date
+        image: String
+
     },
     { timestamps: true }
 );
