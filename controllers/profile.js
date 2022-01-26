@@ -1,4 +1,4 @@
-const Profile = require('../models/Profile');
+const {Profile} = require('../models/Profile');
 const factory = require('./factory');
 
 module.exports.getAllProfiles = factory.getAll(Profile);

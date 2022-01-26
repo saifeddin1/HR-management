@@ -1,4 +1,4 @@
-const Contract = require('../models/Contract');
+const { Contract } = require('../models/Contract');
 const factory = require('./factory');
 
 module.exports.getAllContracts = factory.getAll(Contract);

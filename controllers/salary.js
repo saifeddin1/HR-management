@@ -1,4 +1,4 @@
-const Salary = require('../models/Salary');
+const {Salary} = require('../models/Salary');
 const factory = require('./factory');
 
 module.exports.getAllSalarys = factory.getAll(Salary);

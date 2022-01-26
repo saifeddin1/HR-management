@@ -5,6 +5,11 @@ const { Schema } = mongoose;
 
 const timeOffSchema = Schema(
     {
+
+        file: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'File'
+        },
         startDate: Date,
         endDate: Date,
         status: String
@@ -14,4 +19,4 @@ const timeOffSchema = Schema(
 
 const TimeOff = mongoose.model('TimeOff', timeOffSchema);
 
-module.exports = TimeOff;
+module.exports = { TimeOff, timeOffSchema };

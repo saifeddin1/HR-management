@@ -28,4 +28,6 @@ const address = process.env.SERVER_ADDRESS || 'localhost';
 
 app.get('/', (req, res) => res.send('Hello World!'));
 
-app.listen(port, () => logger.info(`Server running on http://${address}:${port}`));
+app.listen((port), (error) =>
+  error ? logger.error(error)
+    : logger.info(`Server running on http://${address}:${port}`));

@@ -5,12 +5,18 @@ const { Schema } = mongoose;
 
 const timeSheetSchema = Schema(
     {
-        startDate: Date,
-        endDate: Date
+        file: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'File'
+        },
+        date: Date, // nhar li houwa fih 
+        workHours: Number,// 8 //4 
+        note: String,
+        // TODO
     },
     { timestamps: true }
 );
 
 const TimeSheet = mongoose.model('TimeSheet', timeSheetSchema);
 
-module.exports = TimeSheet;
+module.exports = { TimeSheet, timeSheetSchema };

@@ -1,4 +1,4 @@
-const TimeSlot = require('../models/TimeSlot');
+const {TimeSlot} = require('../models/TimeSlot');
 
 const factory = require('./factory');
 

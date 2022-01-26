@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const fileController = require('../../controllers/file')
 
+router.get('/getAllWithQueries', fileController.getAllFilesWithQuries);
 router.get('/', fileController.getAllFiles);
 router.post('/', fileController.createNewFile);
 router.get('/:id', fileController.getOneFile);

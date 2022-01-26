@@ -1,4 +1,4 @@
-const TimeSheet = require('../models/TimeSheet');
+const { TimeSheet } = require('../models/TimeSheet');
 const factory = require('./factory');
 
 module.exports.getAllTimeSheets = factory.getAll(TimeSheet);

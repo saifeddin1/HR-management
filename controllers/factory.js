@@ -1,4 +1,4 @@
-const logger = require('../config/logger')
+const logger = require('../config/logger').logger
 
 
 const getAll = (Model) =>
@@ -10,7 +10,7 @@ const getAll = (Model) =>
                 response: objects,
                 message: objects?.length > 0 ? `${Model.modelName}s retrieved` : `No ${Model.modelName}s found`
             })
-        } catch (error) {
+        } catch (e) {
             logger.error(`Error in getAll() function`)
             return res.status(400).send(e);
         }
@@ -41,7 +41,11 @@ const getOne = (Model) =>
 
 const createOne = (Model) =>
     async (req, res) => {
+        console.log("Create One");
+        console.log("Model :", Model.modelName);
         const object = new Model(req.body);
+        console.log("Object :", object);
+
         try {
             await object.save()
             res.status(201).json(

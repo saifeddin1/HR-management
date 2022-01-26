@@ -5,6 +5,7 @@ const { Schema } = mongoose;
 
 const CollaboratorSchema = Schema(
     {
+
         position: String,
         departement: String,
         proEmail: { type: String, unique: true },
@@ -12,9 +13,14 @@ const CollaboratorSchema = Schema(
     },
     { timestamps: true }
 )
+const Collaborator = mongoose.model('Collaborator', CollaboratorSchema);
 
 const profileSchema = Schema(
     {
+        file: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'File'
+        },
         position: String,
         departement: String,
         proEmail: { type: String, unique: true },
@@ -26,4 +32,4 @@ const profileSchema = Schema(
 
 const Profile = mongoose.model('Profile', profileSchema);
 
-module.exports = Profile;
+module.exports = { Profile, profileSchema };

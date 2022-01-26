@@ -1,4 +1,4 @@
-const TimeOff = require('../models/TimeOff');
+const { TimeOff } = require('../models/TimeOff');
 const factory = require('./factory');
 
 module.exports.getAllTimeOffs = factory.getAll(TimeOff);

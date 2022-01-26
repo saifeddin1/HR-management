@@ -3,20 +3,18 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
-const ContractSchema = Schema(
+const timetableSchema = Schema(
     {
         file: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'File'
         },
-        contractType: String,
-        hoursNumber: Number,
         startDate: Date,
-        endDate: Date,
+        endDate: Date
     },
     { timestamps: true }
 );
 
-const Contract = mongoose.model('Contract', ContractSchema);
+const Timetable = mongoose.model('Timetable', timetableSchema);
 
-module.exports = { Contract, ContractSchema };
+module.exports = { Timetable, timetableSchema };
