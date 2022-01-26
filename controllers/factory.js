@@ -20,12 +20,14 @@ const getOne = (Model) =>
         try {
             const { id } = req.params;
             const object = await Model.findById(id);
-            return !object ? res.status(404) : res.status(200).json(
-                {
-                    response: object,
-                    message: `${Model.modelName} retrieved`
-                }
-            );
+            return !object
+                ? res.status(404).json({ message: `${Model.modelName} Not Found` })
+                : res.status(200).json(
+                    {
+                        response: object,
+                        message: `${Model.modelName} retrieved`
+                    }
+                );
         } catch (e) {
             return res.status(400).send(e)
         }
