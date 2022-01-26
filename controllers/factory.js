@@ -1,3 +1,6 @@
+const logger = require('../config/logger')
+
+
 const getAll = (Model) =>
 
     async (req, res) => {
@@ -8,6 +11,7 @@ const getAll = (Model) =>
                 message: objects?.length > 0 ? `${Model.modelName}s retrieved` : `No ${Model.modelName}s found`
             })
         } catch (error) {
+            logger.error(`Error in getAll() function`)
             return res.status(400).send(e);
         }
 
@@ -29,6 +33,7 @@ const getOne = (Model) =>
                     }
                 );
         } catch (e) {
+            logger.error(`Error in getOne() function`)
             return res.status(400).send(e)
         }
 
@@ -47,6 +52,7 @@ const createOne = (Model) =>
             )
 
         } catch (e) {
+            logger.error(`Error in createOne() function`)
             return res.status(400).send(e)
         }
 
@@ -71,6 +77,7 @@ const updateOne = (Model) =>
             );
 
         } catch (e) {
+            logger.error(`Error in updateOne() function`)
             return res.status(400).send(e);
         }
 
@@ -88,6 +95,7 @@ const deleteOne = (Model) =>
                 }
             );
         } catch (e) {
+            logger.error(`Error in deleteOne() function`)
             return res.status(400).send(e);
         }
 
