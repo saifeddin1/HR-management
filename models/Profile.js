@@ -3,17 +3,7 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
-const CollaboratorSchema = Schema(
-    {
 
-        position: String,
-        departement: String,
-        proEmail: { type: String, unique: true },
-        image: String,
-    },
-    { timestamps: true }
-)
-const Collaborator = mongoose.model('Collaborator', CollaboratorSchema);
 
 const profileSchema = Schema(
     {
@@ -23,9 +13,14 @@ const profileSchema = Schema(
         },
         position: String,
         departement: String,
-        proEmail: { type: String, unique: true },
+        proEmail: { type: String, required: false },
         image: String,
-        collaborators: [{ type: CollaboratorSchema, default: new Object() }]
+        collaborators: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Profile'
+            }
+        ]
     },
     { timestamps: true }
 );

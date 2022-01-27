@@ -41,13 +41,15 @@ const getOne = (Model) =>
 
 const createOne = (Model) =>
     async (req, res) => {
-        console.log("Create One");
-        console.log("Model :", Model.modelName);
+
+        logger.info("Create One");
+        logger.info("Model :", Model.modelName);
         const object = new Model(req.body);
-        console.log("Object :", object);
+        logger.info("Object :", object);
 
         try {
-            await object.save()
+            await object.save();
+            console.log("Saved ");
             res.status(201).json(
                 {
                     response: object,
