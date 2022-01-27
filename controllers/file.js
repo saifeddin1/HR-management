@@ -191,6 +191,38 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                     ],
                     'as': 'timesheet'
                 }
+            },
+            {
+                '$lookup': {
+                    'from': 'timeoffs',
+                    'let': {
+                        'fileId': '$_id' // Id of the current file
+                    },
+                    'pipeline': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$and': [
+                                        {
+                                            '$eq': [
+                                                '$file', '$$fileId'
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            '$project': {
+                                startDate: 1,
+                                offDays: 1,
+                                requestedOn: 1,
+                                status: 1,
+                            }
+                        }
+                    ],
+                    'as': 'timeoff_requests'
+                }
             }
         )
     }

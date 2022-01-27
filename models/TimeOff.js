@@ -5,14 +5,20 @@ const { Schema } = mongoose;
 
 const timeOffSchema = Schema(
     {
-
         file: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'File'
         },
         startDate: Date,
-        endDate: Date,
-        status: String
+        offDays: Number,
+        requestedOn: {
+            type: Date,
+            default: Date.now
+        },
+        status: {
+            type: String,
+            default: "Pending",
+        }
     },
     { timestamps: true }
 );

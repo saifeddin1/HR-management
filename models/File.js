@@ -6,7 +6,8 @@ const { Schema } = mongoose;
 const fileSchema = Schema(
     {
         userRef: String,
-        userId: String
+        userId: String,
+        timeOffBalance: Number
     },
     { timestamps: true }
 );
