@@ -21,6 +21,8 @@ const timeSheetSchema = Schema(
             taskName: String,
             taskDescription: String,
             workingHours: Number,
+            startedAt: Date,
+            finishedAt: Date,
         }],
         week: {
             startDate: Date,

@@ -95,7 +95,7 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
         { '$match': { _id: mongoose.Types.ObjectId(id), userId: userId } }
     ]
 
-    if (req?.query?.withContracts) {
+    if (req?.query?.full) {
         aggregation.unshift(
             {
                 '$lookup': {
@@ -183,10 +183,8 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                         {
                             '$project': {
                                 today: 1,
-                                workingHours: 1,
-                                workDay: 1,
                                 week: 1,
-                                task: 1,
+                                tasks: 1,
                                 note: 1,
                             }
                         }
