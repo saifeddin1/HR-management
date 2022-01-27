@@ -3,19 +3,37 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
+
 const timeSheetSchema = Schema(
     {
-        startDate: Date,
-        endDate: Date,
-        createdAt: {
-            type: Date,
-            default: Date.now()
+        file: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'File'
         },
-        UpdatedAt: String
+        // task: String,
+        today: {
+            type: Date,
+            default: Date.now
+        },
+        fullDayHours: Number,
+        halfDayHours: Number,
+        tasks: [{
+            taskName: String,
+            taskDescription: String,
+            workingHours: Number,
+            startedAt: Date,
+            finishedAt: Date,
+        }],
+        week: {
+            startDate: Date,
+            endDate: Date
+        },
+        note: String,
+
     },
     { timestamps: true }
 );
 
 const TimeSheet = mongoose.model('TimeSheet', timeSheetSchema);
 
-module.exports = TimeSheet;
+module.exports = { TimeSheet, timeSheetSchema };

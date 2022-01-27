@@ -3,21 +3,28 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
+
+
 const profileSchema = Schema(
     {
+        file: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'File'
+        },
         position: String,
         departement: String,
-        proEmail: { type: String, unique: true },
+        proEmail: { type: String, required: false },
         image: String,
-        createdAt: {
-            type: Date,
-            default: Date.now()
-        },
-        UpdatedAt: Date
+        collaborators: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Profile'
+            }
+        ]
     },
     { timestamps: true }
 );
 
 const Profile = mongoose.model('Profile', profileSchema);
 
-module.exports = Profile;
+module.exports = { Profile, profileSchema };

@@ -1,74 +1,123 @@
-const Profile = require('../models/Profile');
+const { Profile } = require('../models/Profile');
+const factory = require('./factory');
+const logger = require('../config/logger').logger;
+const mongoose = require('mongoose')
+
+module.exports.getAllProfiles = factory.getAll(Profile);
+module.exports.getOneProfile = factory.getOne(Profile);
+module.exports.createNewProfile = factory.createOne(Profile);
+module.exports.updateProfile = factory.updateOne(Profile);
+module.exports.deleteProfile = factory.deleteOne(Profile);
 
 
+module.exports.getOneProfilesWithQueries = async (req, res) => {
+    logger.info("Method : getOneProfilesWithQuries, message : onInit");
+    const { id } = req.params;
 
-const getAllProfiles = async (req, res) => {
-    try {
-        const profiles = await Profile.find({})
-        res.status(200).send({ profiles })
-    } catch (e) {
-        return res.status(400).send(e)
+
+    logger.info("Method : getOneProfilesWithQuries, message : building aggregation ...");
+    var aggregation = [
+        { '$match': { _id: mongoose.Types.ObjectId(id) } }
+    ]
+
+    console.log("agg1");
+    if (req?.query?.withCollaborators) {
+        aggregation.unshift(
+            {
+                $lookup:
+                {
+                    from: 'profiles',//<collection to join>,
+                    localField: '_id',
+                    foreignField: 'collaborators',
+                    as: 'collaborators'
+                },
+
+            })
     }
 
-}
-
-const getOneProfile = async (req, res) => {
+    logger.info("aggregation : ", aggregation)
     try {
-        const { id } = req.params;
-        const profile = await Profile.findById(id);
-        return !profile ? res.status(404) : res.status(200).send(profile);
-    } catch (e) {
-        return res.status(400).send(e)
-    }
+        const object = await Profile.aggregate(aggregation);
 
+        console.log(object);
+
+        res.status(200).json({
+            response: object,
+            message: object?.length ? `Profiles retrieved` : `No Profiles found`
+        })
+    } catch (e) {
+        logger.error(`Error in getOneProfilesWithQueries() function`)
+        return res.status(400).send(JSON.stringify(e));
+    }
 }
 
-const createNewProfile = async (req, res) => {
-    const profile = new Profile(req.body);
+module.exports.getAllProfilesWithQuries = async (req, res) => {
     try {
-        await profile.save()
-        res.status(201).send({ profile })
+        logger.info("Method : getAllProfilesWithQuries, message : onInit");
+        var pageNumber = 0;
+        if (req?.query?.page) {
+            pageNumber = Number(req?.query?.page);
+        }
+        var limitNumber = 10;  // default value 10
+        if (req?.query?.limit) {
+            limitNumber = Number(req?.query?.limit);
+        }
+        logger.info("Method : getAllProfilesWithQuries, message : building aggregation ...");
+        var aggregation = [
+            {
+                '$facet': {
+                    'totalData': [
+                        {
+                            '$sort': { '_id': 1 }, //asc 1 // desc-1
+                        },
+                        {
+                            '$skip': Math.floor(pageNumber * limitNumber),
+                        },
+                        {
+                            '$limit': limitNumber,
+                        },
+                    ],
+                    'totalCount': [
+                        {
+                            '$count': 'count'
+                        }
+                    ]
+                }
+            }
+        ]
 
+        if (req?.query?.withCollaborators) {
+            aggregation.unshift(
+                {
+                    $lookup:
+                    {
+                        from: 'profiles',//<collection to join>,
+                        localField: '_id',
+                        foreignField: 'collaborators',
+                        as: 'collaborators'
+                    },
+
+                })
+        }
+
+        logger.info("aggregation : ", aggregation)
+
+        const objects = await Profile.aggregate(aggregation)
+        console.log("result : ", objects)
+
+        res.status(200).json({
+            response: objects,
+            message: objects?.length ? `Profiles retrieved` : `No Profiles found`
+        })
     } catch (e) {
-        return res.status(400).send(e)
+        logger.error(`Error in getAllWithQueries() function`)
+        return res.status(400).send(JSON.stringify(e));
     }
-
 }
 
-const updateProfile = async (req, res) => {
-    const updates = Object.keys(req.body);
-    const id = req.params.id;
-    try {
-        const profile = await Profile.findById(id);
-        if (!profile) return res.sendStatus(404);
-        updates.forEach(update => {
-            profile[update] = req.body[update];
-        });
-        await profile.save();
-        return res.send(profile);
 
-    } catch (e) {
-        return res.status(400).send(e);
-    }
 
-}
 
-const deleteProfile = async (req, res) => {
-    const id = req.params.id;
-    try {
-        const profile = await Profile.findByIdAndDelete(id);
-        return !profile ? res.send(404) : res.send({ message: "profile deleted!" })
-    } catch (e) {
-        return res.status(400).send(e);
-    }
 
-}
 
-module.exports = {
-
-    getAllProfiles,
-    getOneProfile,
-    createNewProfile,
-    updateProfile,
-    deleteProfile
-}
+// 

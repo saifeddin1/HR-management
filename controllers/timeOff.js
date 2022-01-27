@@ -1,74 +1,101 @@
-const TimeOff = require('../models/TimeOff');
+const { TimeOff } = require('../models/TimeOff');
+const factory = require('./factory');
 
+module.exports.getAllTimeOffs = factory.getAll(TimeOff);
+module.exports.getOneTimeOff = factory.getOne(TimeOff);
+module.exports.createNewTimeOff = factory.createOne(TimeOff);
+module.exports.updateTimeOff = factory.updateOne(TimeOff);
+module.exports.deleteTimeOff = factory.deleteOne(TimeOff);
 
-
-const getAllTimeOffs = async (req, res) => {
+module.exports.employeeTimeoffHistory = async (req, res) => {
+    const { id } = req.params;
     try {
-        const timeOffs = await TimeOff.find({})
-        res.status(200).send({ timeOffs })
+        console.log("starting employeeTimeoff");
+        const objects = await TimeOff.find({ file: id });
+        console.log("obj:", objects);
+        return !objects
+            ? res.status(404).json({ message: `TimeOff Not Found` })
+            : res.status(200).json(
+                {
+                    response: objects,
+                    message: `TimeOff retrieved`
+                }
+            );
     } catch (e) {
+        logger.error(`Error in employeeTimeoff() function`)
         return res.status(400).send(e)
     }
 
 }
 
-const getOneTimeOff = async (req, res) => {
+module.exports.employeeTimeoffDetails = async (req, res) => {
+    const { id } = req.params;
+    const { t_off_id } = req?.query
     try {
-        const { id } = req.params;
-        const timeOff = await TimeOff.findById(id);
-        return !timeOff ? res.status(404) : res.status(200).send(timeOff);
+        console.log("starting employeeTimeoffDetails");
+        const object = await TimeOff.findOne({ file: id, _id: t_off_id });
+        console.log("obj:", object);
+        return !object
+            ? res.status(404).json({ message: `TimeOff Not Found` })
+            : res.status(200).json(
+                {
+                    response: object,
+                    message: `TimeOff retrieved`
+                }
+            );
     } catch (e) {
+        logger.error(`Error in employeeTimeoffDetails() function`)
         return res.status(400).send(e)
     }
 
 }
 
-const createNewTimeOff = async (req, res) => {
-    const timeOff = new TimeOff(req.body);
-    try {
-        await timeOff.save()
-        res.status(201).send({ timeOff })
-
-    } catch (e) {
-        return res.status(400).send(e)
-    }
-
-}
-
-const updateTimeOff = async (req, res) => {
+module.exports.updateEmployeeTimeoff = async (req, res) => {
+    const { id } = req.params;
+    const { t_off_id } = req?.query
     const updates = Object.keys(req.body);
-    const id = req.params.id;
     try {
-        const timeOff = await TimeOff.findById(id);
-        if (!timeOff) return res.sendStatus(404);
+        console.log("starting updateEmployeeTimeoff");
+        const object = await TimeOff.findOne({ file: id, _id: t_off_id });
+        if (!object) return res.sendStatus(404);
         updates.forEach(update => {
-            timeOff[update] = req.body[update];
+            object[update] = req.body[update];
         });
-        await timeOff.save();
-        return res.send(timeOff);
-
+        await object.save();
+        console.log("saved obj");
+        return !object
+            ? res.status(404).json({ message: `TimeOff Not Found` })
+            : res.status(200).json(
+                {
+                    response: object,
+                    message: `TimeOff updated`
+                }
+            );
     } catch (e) {
-        return res.status(400).send(e);
+        logger.error(`Error in updateEmployeeTimeoff() function`)
+        return res.status(400).send(e)
     }
 
 }
 
-const deleteTimeOff = async (req, res) => {
-    const id = req.params.id;
+module.exports.deleteEmployeeTimeoff = async (req, res) => {
+    const { id } = req.params;
+    const { t_off_id } = req?.query
     try {
-        const timeOff = await TimeOff.findByIdAndDelete(id);
-        return !timeOff ? res.send(404) : res.send({ message: "timeOff deleted!" })
+        console.log("starting deleteEmployeeTimeoff");
+        const object = await TimeOff.findOne({ file: id, _id: t_off_id }).deleteOne();
+
+        return !object
+            ? res.status(404).json({ message: `TimeOff Not Found` })
+            : res.status(200).json(
+                {
+                    response: object,
+                    message: `TimeOff deleted`
+                }
+            );
     } catch (e) {
-        return res.status(400).send(e);
+        logger.error(`Error in deleteEmployeeTimeoff() function`)
+        return res.status(400).send(e)
     }
 
-}
-
-module.exports = {
-
-    getAllTimeOffs,
-    getOneTimeOff,
-    createNewTimeOff,
-    updateTimeOff,
-    deleteTimeOff
 }
