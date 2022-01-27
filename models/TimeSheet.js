@@ -3,16 +3,31 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
+
 const timeSheetSchema = Schema(
     {
         file: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'File'
         },
-        date: Date, // nhar li houwa fih 
-        workHours: Number,// 8 //4 
+        // task: String,
+        today: {
+            type: Date,
+            default: Date.now
+        },
+        fullDayHours: Number,
+        halfDayHours: Number,
+        tasks: [{
+            taskName: String,
+            taskDescription: String,
+            workingHours: Number,
+        }],
+        week: {
+            startDate: Date,
+            endDate: Date
+        },
         note: String,
-        // TODO
+
     },
     { timestamps: true }
 );
