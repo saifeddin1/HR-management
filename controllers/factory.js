@@ -93,7 +93,10 @@ const deleteOne = (Model) =>
     async (req, res) => {
         const id = req.params.id;
         try {
-            const object = await Model.findByIdAndDelete(id);
+            // const object = await Model.findByIdAndDelete(id);
+            const object = await Model.findById(id);
+            object.enabled = false;
+            await object.save()
             return !object ? res.send(404) : res.json(
                 {
                     response: object,

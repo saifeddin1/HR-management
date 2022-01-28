@@ -84,47 +84,6 @@ module.exports.getCollaborators = async (req, res) => {
 }
 
 
-// Not Working ❌ update profile as employee
-module.exports.updateEmployeeDetails = async (req, res) => {
-    const validationErrors = [];
-    const updates = Object.keys(req.body);
-    const allowedUpdates = ['proEmail', 'image'];
-    const isValidOperation = updates.every(update => {
-        const isValid = allowedUpdates.includes(update);
-        if (!isValid) validationErrors.push(update);
-        return isValid;
-    });
-
-    if (!isValidOperation)
-        return res.status(400).send({ error: `Invalid updates: ${validationErrors.join(',')}` });
-
-    const id = req.params.id;
-
-    try {
-
-        console.log('params id : ', id)
-        const employeeFile = await File.findOne({ file: id });
-
-        logger.info(' employeeFile : ', employeeFile)
-
-        if (!employeeFile) return res.sendStatus(404);
-        updates.forEach(update => {
-            employeeFile.profile[update] = req.body[update];
-        });
-        logger.info('updated employeeFile! : ', employeeFile)
-        await employeeFile.save();
-
-        logger.info('saved employeeFile! : ', employeeFile)
-        return res.status(200).json(
-            {
-                response: employeeFile,
-                message: `File for employee-${id} updated Successfuly`
-            })
-    } catch (e) {
-        return res.status(400).send(e);
-    }
-
-}
 
 // Manage employees files for admin 
 //   Working ✅
@@ -133,21 +92,39 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 
     const { id } = req?.params;
     const userId = req?.query?.userId;
+    // const { param } = req.params
+    // logger.debug(param);
+    // var query = [
+    //     { userId: { '$eq': param } },
+    //     { userRef: { '$regex': param, '$options': 'i' } }
+    // ]
+    // var ObjectId = require('mongoose').Types.ObjectId;
+    // if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
+    //     query.push({ _id: mongoose.Types.ObjectId(param) })
+    // }
 
+    // var aggregation = [
+    //     {
+    //         '$match': {
+    //             '$or': query
+    //         }
+    //     }
+    // ]
     try {
         const object = await File.findOne({ _id: id, userId: userId });
-        logger.info('found object! : ', object)
+        // const object = objects[0];
+        console.log('found object! : ', object)
         if (!object) return res.sendStatus(404);
         updates.forEach(update => {
-            logger.info('key : ', update)
+            console.log('key : ', update)
             object[update] = req.body[update];
         });
 
-        logger.info('updated object! : ', object)
+        console.log('updated object! : ', object)
 
         await object.save();
 
-        logger.info('saved object! : ', object)
+        console.log('saved object! : ', object)
 
         return res.json(
             {
@@ -157,7 +134,7 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
         );
 
     } catch (e) {
-        logger.error(`Error in updateEmployeeFileDetails() function`)
+        logger.error(`Error in updateEmployeeFileDetails() function: ${e}`)
         return res.status(400).send(e);
     }
 }
@@ -340,9 +317,30 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
 module.exports.deleteEmployeeFileDetails = async (req, res) => {
     const { id } = req?.params;
     const userId = req?.query?.userId;
-    try {
-        const object = await File.find({ _id: id, userId: userId }).deleteOne();
+    // const { param } = req.params
+    // logger.debug(param);
+    // var query = [
+    //     { userId: { '$eq': param } },
+    //     { userRef: { '$regex': param, '$options': 'i' } }
+    // ]
+    // var ObjectId = require('mongoose').Types.ObjectId;
+    // if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
+    //     query.push({ _id: mongoose.Types.ObjectId(param) })
+    // }
 
+    // var aggregation = [
+    //     {
+    //         '$match': {
+    //             '$or': query
+    //         }
+    //     }
+    // ]
+    try {
+        // const object = await File.aggregate(aggregation).deleteOne();
+        const object = await File.findOne({ _id: id, userId: userId });
+        console.log(object);
+        object.enabled = false;
+        object.save();
         return !object ? res.send(404) : res.json(
             {
                 response: object,
@@ -394,6 +392,7 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
 
         if (req?.query?.withContracts) {
             aggregation.unshift(
+                { '$match': { enabled: true } },
                 {
                     '$lookup': {
                         'from': 'contracts',
@@ -426,19 +425,7 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
                     }
                 })
         }
-        if (req?.query?.withProfiles) {
-            aggregation.unshift(
-                {
-                    $lookup:
-                    {
-                        from: 'profiles',//<collection to join>,
-                        localField: '_id',
-                        foreignField: 'file',
-                        as: 'profiles'
-                    },
 
-                })
-        }
 
         logger.info("aggregation : ", aggregation)
 

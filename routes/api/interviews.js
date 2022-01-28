@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const interviewController = require('../../controllers/interview')
 
-router.get('/', interviewController.getAllInterviews);
+router.get('/', interviewController.getInerviewsSorted);
 router.post('/', interviewController.createNewInterview);
 router.get('/:id', interviewController.getOneInterview);
 router.put('/:id', interviewController.updateInterview);

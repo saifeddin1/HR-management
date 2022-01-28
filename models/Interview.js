@@ -16,7 +16,11 @@ const interviewSchema = Schema(
             url: String, // coding game for exemple
             title: String, // test angualr node js
             description: String, // ce test est ......
-        }]
+        }],
+        enabled: {
+            type: Boolean,
+            default: true,
+        }
     },
     { timestamps: true }
 );

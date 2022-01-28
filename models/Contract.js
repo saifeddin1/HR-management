@@ -13,6 +13,10 @@ const ContractSchema = Schema(
         hoursNumber: Number,
         startDate: Date,
         endDate: Date,
+        enabled: {
+            type: Boolean,
+            default: true,
+        }
     },
     { timestamps: true }
 );

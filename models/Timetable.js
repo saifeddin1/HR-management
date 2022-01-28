@@ -15,6 +15,10 @@ const timetableSchema = Schema(
         },
         title: String, // Matiere text ... ddaedfaedaza
         description: String, // description
+        enabled: {
+            type: Boolean,
+            default: true,
+        }
     },
     { timestamps: true }
 );

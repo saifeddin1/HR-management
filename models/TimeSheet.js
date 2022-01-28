@@ -20,6 +20,10 @@ const timeSheetSchema = Schema(
             endDate: Date
         },
         note: String,
+        enabled: {
+            type: Boolean,
+            default: true,
+        }
 
     },
     { timestamps: true }

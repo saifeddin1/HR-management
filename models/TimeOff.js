@@ -14,6 +14,10 @@ const timeOffSchema = Schema(
         status: {
             type: String,
             default: "Pending",
+        },
+        enabled: {
+            type: Boolean,
+            default: true,
         }
     },
     { timestamps: true }

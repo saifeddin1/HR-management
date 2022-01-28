@@ -10,7 +10,7 @@ const profileSchema = Schema(
         position: String,
         departement: String,
         proEmail: { type: String, required: false },
-        image: String,
+        image: String
     },
     { timestamps: true }
 );
