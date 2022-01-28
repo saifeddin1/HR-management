@@ -11,10 +11,6 @@ const timeOffSchema = Schema(
         },
         startDate: Date,
         offDays: Number,
-        requestedOn: {
-            type: Date,
-            default: Date.now
-        },
         status: {
             type: String,
             default: "Pending",
@@ -22,6 +18,13 @@ const timeOffSchema = Schema(
     },
     { timestamps: true }
 );
+
+// timeOffSchema.methods.toJSON = function () {
+//     var obj = this.toObject()
+//     delete obj.file
+//     delete obj.status
+//     return obj
+// }
 
 const TimeOff = mongoose.model('TimeOff', timeOffSchema);
 

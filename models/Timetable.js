@@ -9,8 +9,12 @@ const timetableSchema = Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'File'
         },
-        startDate: Date,
-        endDate: Date
+        day: {
+            type: String,
+            enum: ["monday", "tuesday"]
+        },
+        title: String, // Matiere text ... ddaedfaedaza
+        description: String, // description
     },
     { timestamps: true }
 );

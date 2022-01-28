@@ -14,6 +14,76 @@ module.exports.deleteFile = factory.deleteOne(File);
 
 
 
+// same as getEmployees 
+module.exports.getCollaborators = async (req, res) => {
+    var pageNumber = 0;
+    if (req?.query?.page) {
+        pageNumber = Number(req?.query?.page);
+    }
+    var limitNumber = 10;  // default value 10
+    if (req?.query?.limit) {
+        limitNumber = Number(req?.query?.limit);
+    }
+    logger.info("Method : getAllFilesWithQuries, message : building aggregation ...");
+    var aggregation = [
+        {
+            '$facet': {
+                'totalData': [
+                    {
+                        '$sort': { '_id': 1 }, //asc 1 // desc-1
+                    },
+                    {
+                        '$skip': Math.floor(pageNumber * limitNumber),
+                    },
+                    {
+                        '$limit': limitNumber,
+                    },
+                ],
+                'totalCount': [
+                    {
+                        '$count': 'count'
+                    }
+                ]
+            }
+        }
+    ]
+    const { param } = req.params
+    logger.debug(param);
+    var query = [
+        { userId: { '$ne': param } },
+        { userRef: { '$ne': param } }
+    ]
+    var ObjectId = mongoose.Types.ObjectId;
+    if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
+        query.push({ _id: { '$ne': mongoose.Types.ObjectId(param) } })
+    }
+    aggregation.unshift(
+        {
+            '$match': {
+                '$and': query
+            }
+        }
+    )
+    try {
+
+        logger.info("aggregation : ", aggregation)
+
+        const objects = await File.aggregate(aggregation)
+        logger.info("result : ", objects)
+        res.status(200).json({
+            response: objects,
+            message: objects?.length > 0 ? `${File.modelName}s retrieved` : `No ${File.modelName}s found`
+        })
+    } catch (e) {
+        logger.error(`Error in getAllWithQueries() function`)
+        return res.status(400).send(JSON.stringify(e));
+    }
+
+
+
+}
+
+
 // Not Working ❌ update profile as employee
 module.exports.updateEmployeeDetails = async (req, res) => {
     const validationErrors = [];
@@ -33,18 +103,23 @@ module.exports.updateEmployeeDetails = async (req, res) => {
     try {
 
         console.log('params id : ', id)
-        const employeeFile = await Profile.findOne({ file: id });
+        const employeeFile = await File.findOne({ file: id });
 
         logger.info(' employeeFile : ', employeeFile)
 
         if (!employeeFile) return res.sendStatus(404);
         updates.forEach(update => {
-            employeeFile[update] = req.body[update];
+            employeeFile.profile[update] = req.body[update];
         });
         logger.info('updated employeeFile! : ', employeeFile)
         await employeeFile.save();
 
         logger.info('saved employeeFile! : ', employeeFile)
+        return res.status(200).json(
+            {
+                response: employeeFile,
+                message: `File for employee-${id} updated Successfuly`
+            })
     } catch (e) {
         return res.status(400).send(e);
     }
@@ -89,10 +164,23 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 
 // Working ✅
 module.exports.getEmployeeFileDetails = async (req, res) => {
-    const { id } = req.params;
-    const userId = req?.query?.userId;
+    const { param } = req.params
+    logger.debug(param);
+    var query = [
+        { userId: { '$eq': param } },
+        { userRef: { '$regex': param, '$options': 'i' } }
+    ]
+    var ObjectId = require('mongoose').Types.ObjectId;
+    if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
+        query.push({ _id: mongoose.Types.ObjectId(param) })
+    }
+
     var aggregation = [
-        { '$match': { _id: mongoose.Types.ObjectId(id), userId: userId } }
+        {
+            '$match': {
+                '$or': query
+            }
+        }
     ]
 
     if (req?.query?.full) {
@@ -216,7 +304,8 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                             '$project': {
                                 startDate: 1,
                                 offDays: 1,
-                                requestedOn: 1,
+                                createdAt: 1,
+                                updatedAt: 1,
                                 status: 1,
                             }
                         }
@@ -230,13 +319,13 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
     try {
         const object = await File.aggregate(aggregation);
 
-        logger.info(object);
+        logger.debug(object);
         return !object
             ? res.status(404).json({ message: `File Not Found` })
             : res.status(200).json(
                 {
                     response: object,
-                    message: `File for employee-${userId} ${object.length ? 'retrieved' : 'Not found'}`
+                    message: `Employee-${param} ${object.length ? 'retrieved' : 'Not found'}`
 
                 }
             );
