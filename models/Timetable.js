@@ -5,16 +5,14 @@ const { Schema } = mongoose;
 
 const timetableSchema = Schema(
     {
-        file: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'File'
-        },
         day: {
             type: String,
-            enum: ["monday", "tuesday"]
+            enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
         },
-        title: String, // Matiere text ... ddaedfaedaza
-        description: String, // description
+        startedAt: Date,
+        endedAt: Date,
+        title: String,
+        description: String,
         enabled: {
             type: Boolean,
             default: true,

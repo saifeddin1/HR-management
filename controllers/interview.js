@@ -1,4 +1,5 @@
 const { Interview } = require('../models/Interview');
+const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 
 const factory = require('./factory');
 
@@ -10,50 +11,13 @@ module.exports.deleteInterview = factory.deleteOne(Interview);
 
 
 module.exports.getInerviewsSorted = async (req, res) => {
-    var pageNumber = 0;
-    if (req?.query?.page) {
-        pageNumber = Number(req?.query?.page);
-    }
-    var limitNumber = 10;  // default value 10
-    if (req?.query?.limit) {
-        limitNumber = Number(req?.query?.limit);
-    }
-    var sort = {}
-    if (req?.query?.sortBy && req?.query?.orderBy) {
-        sort[req.query.sortBy] = req.query.orderBy === 'desc' ? -1 : 1
-    }
-
-    console.log(sort.length);
-    var aggregation = [
-        {
-            '$facet': {
-                'totalData': [
-                    {
-                        '$sort': Object.keys(sort).length ? sort : { '_id': 1 }
-                    },
-                    {
-                        '$skip': Math.floor(pageNumber * limitNumber),
-                    },
-                    {
-                        '$limit': limitNumber,
-                    },
-                ],
-                'totalCount': [
-                    {
-                        '$count': 'count'
-                    }
-                ]
-            }
-        }
-    ]
-
+    var aggregation = aggregationWithFacet(req, res)
     console.log("before try, aggrgegatiojn :", aggregation);
 
     try {
 
         const objects = await Interview.aggregate(aggregation)
 
-        // const obj = await objects.find({ _id: "1111" });
         console.log("objects  :", objects[0]);
 
         res.status(200).json({

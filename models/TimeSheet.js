@@ -15,10 +15,6 @@ const timeSheetSchema = Schema(
             default: Date.now
         },
         workingHours: Number, 
-        week: {
-            startDate: Date,
-            endDate: Date
-        },
         note: String,
         enabled: {
             type: Boolean,

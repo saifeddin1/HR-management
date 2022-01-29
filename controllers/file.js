@@ -1,10 +1,11 @@
 const File = require('../models/File');
-const Profile = require('../models/Profile');
 const { Types } = require('mongoose');
 const factory = require('./factory');
 const logger = require('../config/logger').logger;
-const { aggregate } = require('../models/File');
 const mongoose = require('mongoose')
+const { matchQuery } = require('../utils/matchQuery');
+const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
+
 
 module.exports.getAllFiles = factory.getAll(File);
 module.exports.getOneFile = factory.getOne(File);
@@ -13,47 +14,18 @@ module.exports.updateFile = factory.updateOne(File);
 module.exports.deleteFile = factory.deleteOne(File);
 
 
-
 // same as getEmployees 
 module.exports.getCollaborators = async (req, res) => {
-    var pageNumber = 0;
-    if (req?.query?.page) {
-        pageNumber = Number(req?.query?.page);
-    }
-    var limitNumber = 10;  // default value 10
-    if (req?.query?.limit) {
-        limitNumber = Number(req?.query?.limit);
-    }
-    logger.info("Method : getAllFilesWithQuries, message : building aggregation ...");
-    var aggregation = [
-        {
-            '$facet': {
-                'totalData': [
-                    {
-                        '$sort': { '_id': 1 }, //asc 1 // desc-1
-                    },
-                    {
-                        '$skip': Math.floor(pageNumber * limitNumber),
-                    },
-                    {
-                        '$limit': limitNumber,
-                    },
-                ],
-                'totalCount': [
-                    {
-                        '$count': 'count'
-                    }
-                ]
-            }
-        }
-    ]
     const { param } = req.params
+
+    var aggregation = aggregationWithFacet(req, res);
+
     logger.debug(param);
     var query = [
         { userId: { '$ne': param } },
         { userRef: { '$ne': param } }
     ]
-    var ObjectId = mongoose.Types.ObjectId;
+    var ObjectId = require('mongoose').Types.ObjectId;
     if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
         query.push({ _id: { '$ne': mongoose.Types.ObjectId(param) } })
     }
@@ -68,7 +40,7 @@ module.exports.getCollaborators = async (req, res) => {
 
         logger.info("aggregation : ", aggregation)
 
-        const objects = await File.aggregate(aggregation)
+        const objects = await File.aggregate(aggregation) // 
         logger.info("result : ", objects)
         res.status(200).json({
             response: objects,
@@ -84,7 +56,6 @@ module.exports.getCollaborators = async (req, res) => {
 }
 
 
-
 // Manage employees files for admin 
 //   Working ✅
 module.exports.updateEmployeeFileDetails = async (req, res) => {
@@ -92,24 +63,6 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 
     const { id } = req?.params;
     const userId = req?.query?.userId;
-    // const { param } = req.params
-    // logger.debug(param);
-    // var query = [
-    //     { userId: { '$eq': param } },
-    //     { userRef: { '$regex': param, '$options': 'i' } }
-    // ]
-    // var ObjectId = require('mongoose').Types.ObjectId;
-    // if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
-    //     query.push({ _id: mongoose.Types.ObjectId(param) })
-    // }
-
-    // var aggregation = [
-    //     {
-    //         '$match': {
-    //             '$or': query
-    //         }
-    //     }
-    // ]
     try {
         const object = await File.findOne({ _id: id, userId: userId });
         // const object = objects[0];
@@ -142,15 +95,8 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 // Working ✅
 module.exports.getEmployeeFileDetails = async (req, res) => {
     const { param } = req.params
-    logger.debug(param);
-    var query = [
-        { userId: { '$eq': param } },
-        { userRef: { '$regex': param, '$options': 'i' } }
-    ]
-    var ObjectId = require('mongoose').Types.ObjectId;
-    if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
-        query.push({ _id: mongoose.Types.ObjectId(param) })
-    }
+
+    var query = matchQuery(param);
 
     var aggregation = [
         {
@@ -159,6 +105,8 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
             }
         }
     ]
+
+    logger.debug("Incomoing aggregation: ", aggregation);
 
     if (req?.query?.full) {
         aggregation.unshift(
@@ -191,38 +139,6 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                         }
                     ],
                     'as': 'contracts'
-                }
-            },
-            {
-                '$lookup': {
-                    'from': 'profiles',
-                    'let': {
-                        'fileId': '$_id' // Id of the current file
-                    },
-                    'pipeline': [
-                        {
-                            '$match': {
-                                '$expr': {
-                                    '$and': [
-                                        {
-                                            '$eq': [
-                                                '$file', '$$fileId'
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            '$project': {
-                                position: 1,
-                                departement: 1,
-                                departement: 1,
-                                image: 1
-                            }
-                        }
-                    ],
-                    'as': 'profile'
                 }
             },
             {
@@ -263,6 +179,7 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                     'let': {
                         'fileId': '$_id' // Id of the current file
                     },
+                    // 'localField': '_id',
                     'pipeline': [
                         {
                             '$match': {
@@ -307,7 +224,7 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                 }
             );
     } catch (e) {
-        logger.error(`Error in getEmployeeFileDetails() function`)
+        logger.error(`Error in getEmployeeFileDetails() function`, e)
         return res.status(400).send(e)
     }
 
@@ -317,24 +234,7 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
 module.exports.deleteEmployeeFileDetails = async (req, res) => {
     const { id } = req?.params;
     const userId = req?.query?.userId;
-    // const { param } = req.params
-    // logger.debug(param);
-    // var query = [
-    //     { userId: { '$eq': param } },
-    //     { userRef: { '$regex': param, '$options': 'i' } }
-    // ]
-    // var ObjectId = require('mongoose').Types.ObjectId;
-    // if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
-    //     query.push({ _id: mongoose.Types.ObjectId(param) })
-    // }
 
-    // var aggregation = [
-    //     {
-    //         '$match': {
-    //             '$or': query
-    //         }
-    //     }
-    // ]
     try {
         // const object = await File.aggregate(aggregation).deleteOne();
         const object = await File.findOne({ _id: id, userId: userId });
@@ -357,42 +257,10 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
 
 module.exports.getAllFilesWithQuries = async (req, res) => {
     try {
-        logger.info("Method : getAllFilesWithQuries, message : onInit");
-        var pageNumber = 0;
-        if (req?.query?.page) {
-            pageNumber = Number(req?.query?.page);
-        }
-        var limitNumber = 10;  // default value 10
-        if (req?.query?.limit) {
-            limitNumber = Number(req?.query?.limit);
-        }
-        logger.info("Method : getAllFilesWithQuries, message : building aggregation ...");
-        var aggregation = [
-            {
-                '$facet': {
-                    'totalData': [
-                        {
-                            '$sort': { '_id': 1 }, //asc 1 // desc-1
-                        },
-                        {
-                            '$skip': Math.floor(pageNumber * limitNumber),
-                        },
-                        {
-                            '$limit': limitNumber,
-                        },
-                    ],
-                    'totalCount': [
-                        {
-                            '$count': 'count'
-                        }
-                    ]
-                }
-            }
-        ]
-
+        var aggregation = aggregationWithFacet(req, res);
         if (req?.query?.withContracts) {
             aggregation.unshift(
-                { '$match': { enabled: true } },
+                // { '$match': { enabled: true } },
                 {
                     '$lookup': {
                         'from': 'contracts',
@@ -430,9 +298,7 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
         logger.info("aggregation : ", aggregation)
 
         const objects = await File.aggregate(aggregation)
-        logger.info("result : ", objects)
-        // const obj = await objects.find({ _id: "1111" });
-        // logger.info("hgeeeeeeeeeeeey", obj);
+        logger.info("result : ", objects);
 
         res.status(200).json({
             response: objects,

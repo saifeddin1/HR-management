@@ -9,11 +9,18 @@ const timeOffSchema = Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'File'
         },
-        startDate: Date,
-        offDays: Number,
+        startDate: {
+            type: Date,
+            required: "Start date is required"
+        },
+        offDays: {
+            type: Number,
+            required: "Number of days off is required",
+        },
         status: {
             type: String,
             default: "Pending",
+            enum: { values: ['Pending', 'Approved', 'Rejected'], message: "{VALUE} is not supported. Value should be in ['Pending', 'Approved', 'Rejected'] " }
         },
         enabled: {
             type: Boolean,

@@ -83,8 +83,8 @@ const updateOne = (Model) =>
             );
 
         } catch (e) {
-            logger.error(`Error in updateOne() function`)
-            return res.status(400).send(e);
+            logger.error(`Error in updateOne() function : ${e}`)
+            return res.status(403).json({ message: e });
         }
 
     }

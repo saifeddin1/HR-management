@@ -117,6 +117,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
     const validationErrors = []
     console.log("createTimeOffAsEmployee");
     const inputFields = Object.keys(req.body);
+
     const allowedFields = ["startDate", "offDays"]
     const isValidOperation = inputFields.every(input => {
         const isValid = allowedFields.includes(input);
@@ -164,7 +165,7 @@ module.exports.updateStatus = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(400).send({ error: `Invalid update: ${validationErrors.join(',')}` });
+        return res.status(400).send({ message: `Not authorized to edit : ${validationErrors.join(',')}` });
 
 
     try {
