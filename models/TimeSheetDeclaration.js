@@ -18,8 +18,8 @@ const TimeSheetDeclarationSchema = Schema(
         },
         status: {
             type: String,
-            enum: ["Declared", "Approved", "Rejected"],
-            default: "Declared",
+            enum: ["declared", "approved", "rejected"],
+            default: "declared",
         },
         enabled: {
             type: Boolean,

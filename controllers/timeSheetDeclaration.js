@@ -51,8 +51,6 @@ module.exports.getEmployeeDeclarations = async (req, res) => {
                     {
                         '$project': {
                             date: 1,
-                            workingHours: 1,
-                            note: 1
                         }
                     }
                 ],
@@ -64,15 +62,17 @@ module.exports.getEmployeeDeclarations = async (req, res) => {
 
         logger.info("aggregation : ", aggregation)
 
-        const objects = await TimeSheetDeclaration.aggregate(aggregation) // 
-        logger.debug("result : ", objects)
+        const employeeDeclarations = await TimeSheetDeclaration.aggregate(aggregation) // 
+        logger.debug("result : ", employeeDeclarations)
         res.status(200).json({
-            response: objects,
-            message: objects?.length > 0 ? `TimeSheetDeclarations retrieved` : `No TimeSheetDeclarations found`
+            response: employeeDeclarations,
+            message: employeeDeclarations?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         logger.error(`Error in getEmployeeDeclarations() function`)
-        return res.status(400).send(JSON.stringify(e));
+        return res.status(400).json({
+            message: req.t("ERROR.UNAUTHORIZED")
+        });
     }
 
 }
@@ -90,7 +90,7 @@ module.exports.updateDeclarationStatus = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(403).send({ message: `Not authorized to edit : ${validationErrors.join(',')}` });
+        return res.status(403).send({ message: req.t("ERROR.FORBIDDEN") });
 
 
     try {
@@ -104,14 +104,16 @@ module.exports.updateDeclarationStatus = async (req, res) => {
         console.log("saved");
 
         return !object
-            ? res.status(404).json({ message: `TimeOff Not Found` })
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
                     response: object,
-                    message: `TimeOff updated`
+                    message: req.t("SUCCESS.EDITED")
                 }
             );
     } catch (e) {
-        return res.status(400).send(e)
+        return res.status(400).json({
+            message: req.t("ERROR.UNAUTHORIZED")
+        });
     }
 }
