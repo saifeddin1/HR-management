@@ -11,6 +11,10 @@ const timeSlotSchema = Schema(
         //     type: mongoose.Schema.Types.ObjectId,
         //     ref: 'TimeSheet'
         // },
+        enabled: {
+            type: Boolean,
+            default: true,
+        }
     },
     { timestamps: true }
 );

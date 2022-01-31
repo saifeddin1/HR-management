@@ -8,11 +8,13 @@ const getAll = (Model) =>
             const objects = await Model.find({})
             res.status(200).json({
                 response: objects,
-                message: objects?.length > 0 ? `${Model.modelName}s retrieved` : `No ${Model.modelName}s found`
+                message: objects?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
             })
         } catch (e) {
             logger.error(`Error in getAll() function`)
-            return res.status(400).send(e);
+            return res.status(400).json({
+                message: req.t("ERROR.UNAUTHORIZED")
+            });
         }
 
 
@@ -25,16 +27,18 @@ const getOne = (Model) =>
             const { id } = req.params;
             const object = await Model.findById(id);
             return !object
-                ? res.status(404).json({ message: `${Model.modelName} Not Found` })
+                ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
                 : res.status(200).json(
                     {
                         response: object,
-                        message: `${Model.modelName} retrieved`
+                        message: req.t("SUCCESS.RETRIEVED")
                     }
                 );
         } catch (e) {
             logger.error(`Error in getOne() function`)
-            return res.status(400).send(e)
+            return res.status(400).json({
+                message: req.t("ERROR.UNAUTHORIZED")
+            })
         }
 
     }
@@ -53,13 +57,15 @@ const createOne = (Model) =>
             res.status(201).json(
                 {
                     response: object,
-                    message: `${Model.modelName} created Successfuly`
+                    message: req.t("SUCCESS.CREATED")
                 }
             )
 
         } catch (e) {
             logger.error(`Error in createOne() function`)
-            return res.status(400).send(e)
+            return res.status(400).json({
+                message: req.t("ERROR.UNAUTHORIZED")
+            })
         }
 
     }
@@ -78,13 +84,13 @@ const updateOne = (Model) =>
             return res.json(
                 {
                     response: object,
-                    message: `${Model.modelName} updated Successfuly`
+                    message: req.t("SUCCESS.SAVED"),
                 }
             );
 
         } catch (e) {
-            logger.error(`Error in updateOne() function`)
-            return res.status(400).send(e);
+            logger.error(`Error in updateOne() function : ${e}`)
+            return res.status(403).json({ message: req.t("ERROR.UNAUTHORIZED") });
         }
 
     }
@@ -93,16 +99,21 @@ const deleteOne = (Model) =>
     async (req, res) => {
         const id = req.params.id;
         try {
-            const object = await Model.findByIdAndDelete(id);
+            // const object = await Model.findByIdAndDelete(id);
+            const object = await Model.findById(id);
+            object.enabled = false;
+            await object.save()
             return !object ? res.send(404) : res.json(
                 {
                     response: object,
-                    message: `${Model.modelName} deleted Successfuly`
+                    message: req.t("SUCESS.DELETED")
                 }
             );
         } catch (e) {
             logger.error(`Error in deleteOne() function`)
-            return res.status(400).send(e);
+            return res.status(400).json({
+                message: req.t("ERROR.UNAUTHORIZED")
+            });
         }
 
     }

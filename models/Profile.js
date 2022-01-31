@@ -7,20 +7,23 @@ const { Schema } = mongoose;
 
 const profileSchema = Schema(
     {
-        file: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'File'
+        jobType: {
+            type: String,
+            enum: ["Full-Time", "Part-Time", "Contact", "Internship"]
+        },
+        workFrom: {
+            type: String,
+            enum: ["On-Site", "Remote", "Hybrid"]
+        },
+        seniorityLevel: {
+            type: String,
+            enum: ["Junior", "Senior", "Consultant"]
         },
         position: String,
         departement: String,
         proEmail: { type: String, required: false },
         image: String,
-        collaborators: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Profile'
-            }
-        ]
+
     },
     { timestamps: true }
 );

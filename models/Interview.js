@@ -9,12 +9,18 @@ const interviewSchema = Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'File'
         },
-        dateLastInterview: Date,
-        fileLastInterview: String,
-        history: String,
-        certifications: String,
-        trainingsExpectations: [{ training: { type: String, required: false } }]
-
+        date: Date,
+        title: String,
+        files: String,
+        test: [{
+            url: String, // coding game for exemple
+            title: String, // test angualr node js
+            description: String, // ce test est ......
+        }],
+        enabled: {
+            type: Boolean,
+            default: true,
+        }
     },
     { timestamps: true }
 );

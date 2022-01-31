@@ -1,10 +1,11 @@
 const File = require('../models/File');
-const Profile = require('../models/Profile');
 const { Types } = require('mongoose');
 const factory = require('./factory');
 const logger = require('../config/logger').logger;
-const { aggregate } = require('../models/File');
 const mongoose = require('mongoose')
+const { matchQuery } = require('../utils/matchQuery');
+const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
+
 
 module.exports.getAllFiles = factory.getAll(File);
 module.exports.getOneFile = factory.getOne(File);
@@ -13,43 +14,49 @@ module.exports.updateFile = factory.updateOne(File);
 module.exports.deleteFile = factory.deleteOne(File);
 
 
+// same as getEmployees 
+module.exports.getCollaborators = async (req, res) => {
+    const { param } = req.params
 
-// Not Working ❌ update profile as employee
-module.exports.updateEmployeeDetails = async (req, res) => {
-    const validationErrors = [];
-    const updates = Object.keys(req.body);
-    const allowedUpdates = ['proEmail', 'image'];
-    const isValidOperation = updates.every(update => {
-        const isValid = allowedUpdates.includes(update);
-        if (!isValid) validationErrors.push(update);
-        return isValid;
-    });
+    var aggregation = aggregationWithFacet(req, res);
 
-    if (!isValidOperation)
-        return res.status(400).send({ error: `Invalid updates: ${validationErrors.join(',')}` });
-
-    const id = req.params.id;
-
+    logger.debug(param);
+    var query = [
+        { userId: { '$ne': param } },
+        { userRef: { '$ne': param } }
+    ]
+    var ObjectId = require('mongoose').Types.ObjectId;
+    if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
+        query.push({ _id: { '$ne': mongoose.Types.ObjectId(param) } })
+    }
+    aggregation.unshift(
+        {
+            '$match': {
+                '$and': query
+            }
+        }
+    )
     try {
 
-        console.log('params id : ', id)
-        const employeeFile = await Profile.findOne({ file: id });
+        logger.info("aggregation : ", aggregation)
 
-        logger.info(' employeeFile : ', employeeFile)
+        const objects = await File.aggregate(aggregation) // 
+        logger.info("result : ", objects)
 
-        if (!employeeFile) return res.sendStatus(404);
-        updates.forEach(update => {
-            employeeFile[update] = req.body[update];
-        });
-        logger.info('updated employeeFile! : ', employeeFile)
-        await employeeFile.save();
 
-        logger.info('saved employeeFile! : ', employeeFile)
+        res.status(200).json({
+            response: objects,
+            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
+        })
     } catch (e) {
-        return res.status(400).send(e);
+        logger.error(`Error in getAllWithQueries() function ${e}`)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
+
+
 }
+
 
 // Manage employees files for admin 
 //   Working ✅
@@ -58,42 +65,50 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 
     const { id } = req?.params;
     const userId = req?.query?.userId;
-
     try {
         const object = await File.findOne({ _id: id, userId: userId });
-        logger.info('found object! : ', object)
+        // const object = objects[0];
+        console.log('found object! : ', object)
         if (!object) return res.sendStatus(404);
         updates.forEach(update => {
-            logger.info('key : ', update)
+            console.log('key : ', update)
             object[update] = req.body[update];
         });
 
-        logger.info('updated object! : ', object)
+        console.log('updated object! : ', object)
 
         await object.save();
 
-        logger.info('saved object! : ', object)
+        console.log('saved object! : ', object)
 
         return res.json(
             {
                 response: object,
-                message: `File for employee-${userId} updated Successfuly`
+                message: req.t("SUCESS.EDITED")
             }
         );
 
     } catch (e) {
-        logger.error(`Error in updateEmployeeFileDetails() function`)
-        return res.status(400).send(e);
+        logger.error(`Error in updateEmployeeFileDetails() function: ${e}`)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 }
 
 // Working ✅
 module.exports.getEmployeeFileDetails = async (req, res) => {
-    const { id } = req.params;
-    const userId = req?.query?.userId;
+    const { param } = req.params
+
+    var query = matchQuery(param);
+
     var aggregation = [
-        { '$match': { _id: mongoose.Types.ObjectId(id), userId: userId } }
+        {
+            '$match': {
+                '$or': query
+            }
+        }
     ]
+
+    logger.debug("Incomoing aggregation: ", aggregation);
 
     if (req?.query?.full) {
         aggregation.unshift(
@@ -126,38 +141,6 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                         }
                     ],
                     'as': 'contracts'
-                }
-            },
-            {
-                '$lookup': {
-                    'from': 'profiles',
-                    'let': {
-                        'fileId': '$_id' // Id of the current file
-                    },
-                    'pipeline': [
-                        {
-                            '$match': {
-                                '$expr': {
-                                    '$and': [
-                                        {
-                                            '$eq': [
-                                                '$file', '$$fileId'
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            '$project': {
-                                position: 1,
-                                departement: 1,
-                                departement: 1,
-                                image: 1
-                            }
-                        }
-                    ],
-                    'as': 'profile'
                 }
             },
             {
@@ -198,6 +181,7 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                     'let': {
                         'fileId': '$_id' // Id of the current file
                     },
+                    // 'localField': '_id',
                     'pipeline': [
                         {
                             '$match': {
@@ -216,7 +200,8 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                             '$project': {
                                 startDate: 1,
                                 offDays: 1,
-                                requestedOn: 1,
+                                createdAt: 1,
+                                updatedAt: 1,
                                 status: 1,
                             }
                         }
@@ -230,19 +215,19 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
     try {
         const object = await File.aggregate(aggregation);
 
-        logger.info(object);
+        logger.debug(object);
         return !object
-            ? res.status(404).json({ message: `File Not Found` })
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
                     response: object,
-                    message: `File for employee-${userId} ${object.length ? 'retrieved' : 'Not found'}`
+                    message: req.t("SUCESS.RETRIEVED")
 
                 }
             );
     } catch (e) {
-        logger.error(`Error in getEmployeeFileDetails() function`)
-        return res.status(400).send(e)
+        logger.error(`Error in getEmployeeFileDetails() function`, e)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") })
     }
 
 }
@@ -251,18 +236,22 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
 module.exports.deleteEmployeeFileDetails = async (req, res) => {
     const { id } = req?.params;
     const userId = req?.query?.userId;
-    try {
-        const object = await File.find({ _id: id, userId: userId }).deleteOne();
 
+    try {
+        // const object = await File.aggregate(aggregation).deleteOne();
+        const object = await File.findOne({ _id: id, userId: userId });
+        console.log(object);
+        object.enabled = false;
+        object.save();
         return !object ? res.send(404) : res.json(
             {
                 response: object,
-                message: `File deleted Successfuly`
+                message: req.t("SUCESS.DELETED")
             }
         );
     } catch (e) {
         logger.error(`Error in deleteEmployeeFileDetails() function`)
-        return res.status(400).send(e);
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 }
@@ -270,41 +259,10 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
 
 module.exports.getAllFilesWithQuries = async (req, res) => {
     try {
-        logger.info("Method : getAllFilesWithQuries, message : onInit");
-        var pageNumber = 0;
-        if (req?.query?.page) {
-            pageNumber = Number(req?.query?.page);
-        }
-        var limitNumber = 10;  // default value 10
-        if (req?.query?.limit) {
-            limitNumber = Number(req?.query?.limit);
-        }
-        logger.info("Method : getAllFilesWithQuries, message : building aggregation ...");
-        var aggregation = [
-            {
-                '$facet': {
-                    'totalData': [
-                        {
-                            '$sort': { '_id': 1 }, //asc 1 // desc-1
-                        },
-                        {
-                            '$skip': Math.floor(pageNumber * limitNumber),
-                        },
-                        {
-                            '$limit': limitNumber,
-                        },
-                    ],
-                    'totalCount': [
-                        {
-                            '$count': 'count'
-                        }
-                    ]
-                }
-            }
-        ]
-
+        var aggregation = aggregationWithFacet(req, res);
         if (req?.query?.withContracts) {
             aggregation.unshift(
+                // { '$match': { enabled: true } },
                 {
                     '$lookup': {
                         'from': 'contracts',
@@ -337,34 +295,20 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
                     }
                 })
         }
-        if (req?.query?.withProfiles) {
-            aggregation.unshift(
-                {
-                    $lookup:
-                    {
-                        from: 'profiles',//<collection to join>,
-                        localField: '_id',
-                        foreignField: 'file',
-                        as: 'profiles'
-                    },
 
-                })
-        }
 
         logger.info("aggregation : ", aggregation)
 
         const objects = await File.aggregate(aggregation)
-        logger.info("result : ", objects)
-        // const obj = await objects.find({ _id: "1111" });
-        // logger.info("hgeeeeeeeeeeeey", obj);
+        logger.info("result : ", objects);
 
         res.status(200).json({
             response: objects,
-            message: objects?.length > 0 ? `${File.modelName}s retrieved` : `No ${File.modelName}s found`
+            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         logger.error(`Error in getAllWithQueries() function`)
-        return res.status(400).send(JSON.stringify(e));
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 }
 
@@ -391,11 +335,11 @@ module.exports.getAllFilesWithContractsByFileId = async (req, res) => {
         ])
         res.status(200).json({
             response: objects,
-            message: objects?.length > 0 ? `${Model.modelName}s retrieved` : `No ${Model.modelName}s found`
+            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         logger.error(`Error in getAll() function`)
-        return res.status(400).send(e);
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 }
 

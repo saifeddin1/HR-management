@@ -10,25 +10,16 @@ const timeSheetSchema = Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'File'
         },
-        // task: String,
-        today: {
+        date: {
             type: Date,
             default: Date.now
         },
-        fullDayHours: Number,
-        halfDayHours: Number,
-        tasks: [{
-            taskName: String,
-            taskDescription: String,
-            workingHours: Number,
-            startedAt: Date,
-            finishedAt: Date,
-        }],
-        week: {
-            startDate: Date,
-            endDate: Date
-        },
+        workingHours: Number, 
         note: String,
+        enabled: {
+            type: Boolean,
+            default: true,
+        }
 
     },
     { timestamps: true }
