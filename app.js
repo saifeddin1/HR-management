@@ -5,6 +5,7 @@ const expressStatusMonitor = require('express-status-monitor');
 const connectDB = require('./config/mongoose');
 const routes = require('./routes');
 const logger = require('./config/logger').logger
+const { auth } = require('./config/auth')
 
 dotenv.config({ path: '.env' });
 const app = express();
@@ -20,7 +21,7 @@ app.use((req, res, next) => {
   res.locals.user = req.user;
   next();
 });
-
+app.use(auth);
 app.use(routes);
 
 const port = process.env.PORT || 8080;
