@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const expressStatusMonitor = require('express-status-monitor');
 const connectDB = require('./config/mongoose');
 const routes = require('./routes');
+const i18next = require("./utils/i18n.js");
+const middleware = require("i18next-http-middleware");
 const logger = require('./config/logger').logger
 const { auth } = require('./config/auth')
 
@@ -13,8 +15,8 @@ const app = express();
 connectDB();
 
 app.use(express.json());
+app.use(middleware.handle(i18next));
 app.use(express.urlencoded({ extended: true }));
-
 app.disable('x-powered-by');
 app.use(expressStatusMonitor());
 app.use((req, res, next) => {

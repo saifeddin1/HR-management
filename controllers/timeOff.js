@@ -14,16 +14,16 @@ module.exports.employeeTimeoffHistory = async (req, res) => {
         const objects = await TimeOff.find({ file: id });
         console.log("obj:", objects);
         return !objects
-            ? res.status(404).json({ message: `TimeOff Not Found` })
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
                     response: objects,
-                    message: `TimeOff retrieved`
+                    message: req.t("SUCESS.RETRIEVED")
                 }
             );
     } catch (e) {
         console.log(`Error in employeeTimeoff() function`)
-        return res.status(400).send(e)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 }
@@ -36,16 +36,16 @@ module.exports.employeeTimeoffDetails = async (req, res) => {
         const object = await TimeOff.findOne({ file: id, _id: t_off_id });
         console.log("obj:", object);
         return !object
-            ? res.status(404).json({ message: `TimeOff Not Found` })
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
                     response: object,
-                    message: `TimeOff retrieved`
+                    message: req.t("SUCESS.RETRIEVED")
                 }
             );
     } catch (e) {
         console.log(`Error in employeeTimeoffDetails() function`)
-        return res.status(400).send(e)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 }
@@ -63,30 +63,30 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(400).send({ error: `Invalid update: ${validationErrors.join(',')}` });
+        return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
 
 
     try {
         console.log("starting updateEmployeeTimeoff");
         const object = await TimeOff.findOne({ file: id, _id: t_off_id });
         if (!object) return res.sendStatus(404);
-        if (!(object.status === "Pending")) return res.status(400).json({ message: "cannot update request" });
+        if (!(object.status === "Pending")) return res.status(400).json({ message: req.t("SUCESS.FORBIDEN") });
         updates.forEach(update => {
             object[update] = req.body[update];
         });
         await object.save();
         console.log("saved obj");
         return !object
-            ? res.status(404).json({ message: `TimeOff Not Found` })
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
                     response: object,
-                    message: `TimeOff updated`
+                    message: req.t("SUCESS.EDITED")
                 }
             );
     } catch (e) {
         console.log(`Error in updateEmployeeTimeoff() function`)
-        return res.status(400).send(e)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 }
@@ -99,16 +99,16 @@ module.exports.deleteEmployeeTimeoff = async (req, res) => {
         const object = await TimeOff.findOne({ file: id, _id: t_off_id }).deleteOne();
 
         return !object
-            ? res.status(404).json({ message: `TimeOff Not Found` })
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
                     response: object,
-                    message: `TimeOff deleted`
+                    message: req.t("SUCCESS.DELETED")
                 }
             );
     } catch (e) {
         console.log(`Error in deleteEmployeeTimeoff() function`)
-        return res.status(400).send(e)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 }
@@ -126,7 +126,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(400).send({ error: `Invalid operations: ${validationErrors.join(',')}` });
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
 
     const object = new TimeOff();
     inputFields.forEach(input => {
@@ -140,13 +140,13 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
         res.status(201).json(
             {
                 response: object,
-                message: `Timeoff created Successfuly`
+                message: req.t("SUCCESS.ADDED")
             }
         )
 
     } catch (e) {
         console.log(`Error in createOne() function`)
-        return res.status(400).send(e)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 }
@@ -165,7 +165,7 @@ module.exports.updateStatus = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(400).send({ message: `Not authorized to edit : ${validationErrors.join(',')}` });
+        return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
 
 
     try {
@@ -179,15 +179,15 @@ module.exports.updateStatus = async (req, res) => {
         console.log("saved");
 
         return !object
-            ? res.status(404).json({ message: `TimeOff Not Found` })
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
                     response: object,
-                    message: `TimeOff updated`
+                    message: req.t("SUCCESS.EDITED")
                 }
             );
     } catch (e) {
-        return res.status(400).send(e)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 }

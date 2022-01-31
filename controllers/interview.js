@@ -22,7 +22,7 @@ module.exports.getInerviewsSorted = async (req, res) => {
 
         res.status(200).json({
             response: objects,
-            message: objects?.length > 0 ? `Interviews retrieved` : `No Interviews found`
+            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         return res.status(400).send(e);

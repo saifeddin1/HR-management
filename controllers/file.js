@@ -42,13 +42,15 @@ module.exports.getCollaborators = async (req, res) => {
 
         const objects = await File.aggregate(aggregation) // 
         logger.info("result : ", objects)
+
+
         res.status(200).json({
             response: objects,
-            message: objects?.length > 0 ? `${File.modelName}s retrieved` : `No ${File.modelName}s found`
+            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
-        logger.error(`Error in getAllWithQueries() function`)
-        return res.status(400).send(JSON.stringify(e));
+        logger.error(`Error in getAllWithQueries() function ${e}`)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 
@@ -82,13 +84,13 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
         return res.json(
             {
                 response: object,
-                message: `File for employee-${userId} updated Successfuly`
+                message: req.t("SUCESS.EDITED")
             }
         );
 
     } catch (e) {
         logger.error(`Error in updateEmployeeFileDetails() function: ${e}`)
-        return res.status(400).send(e);
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 }
 
@@ -215,17 +217,17 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
 
         logger.debug(object);
         return !object
-            ? res.status(404).json({ message: `File Not Found` })
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
                     response: object,
-                    message: `Employee-${param} ${object.length ? 'retrieved' : 'Not found'}`
+                    message: req.t("SUCESS.RETRIEVED")
 
                 }
             );
     } catch (e) {
         logger.error(`Error in getEmployeeFileDetails() function`, e)
-        return res.status(400).send(e)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") })
     }
 
 }
@@ -244,12 +246,12 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
         return !object ? res.send(404) : res.json(
             {
                 response: object,
-                message: `File deleted Successfuly`
+                message: req.t("SUCESS.DELETED")
             }
         );
     } catch (e) {
         logger.error(`Error in deleteEmployeeFileDetails() function`)
-        return res.status(400).send(e);
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 }
@@ -302,11 +304,11 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
 
         res.status(200).json({
             response: objects,
-            message: objects?.length > 0 ? `${File.modelName}s retrieved` : `No ${File.modelName}s found`
+            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         logger.error(`Error in getAllWithQueries() function`)
-        return res.status(400).send(JSON.stringify(e));
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 }
 
@@ -333,11 +335,11 @@ module.exports.getAllFilesWithContractsByFileId = async (req, res) => {
         ])
         res.status(200).json({
             response: objects,
-            message: objects?.length > 0 ? `${Model.modelName}s retrieved` : `No ${Model.modelName}s found`
+            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         logger.error(`Error in getAll() function`)
-        return res.status(400).send(e);
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 }
 
