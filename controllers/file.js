@@ -16,18 +16,16 @@ module.exports.deleteFile = factory.deleteOne(File);
 
 // same as getEmployees 
 module.exports.getCollaborators = async (req, res) => {
-    const { param } = req.params
-
+    const userId = req.user?.userId;
     var aggregation = aggregationWithFacet(req, res);
-
-    logger.debug(param);
+    logger.debug("req.userid", userId);
     var query = [
-        { userId: { '$ne': param } },
-        { userRef: { '$ne': param } }
+        { userId: { '$ne': userId } },
+        { userRef: { '$ne': userId } }
     ]
     var ObjectId = require('mongoose').Types.ObjectId;
-    if (typeof param == "string" && ObjectId.isValid(param)) {// param is a valid objectId
-        query.push({ _id: { '$ne': mongoose.Types.ObjectId(param) } })
+    if (typeof userId == "string" && ObjectId.isValid(userId)) {// userId is a valid objectId
+        query.push({ _id: { '$ne': mongoose.Types.ObjectId(userId) } })
     }
     aggregation.unshift(
         {
@@ -46,7 +44,7 @@ module.exports.getCollaborators = async (req, res) => {
 
         res.status(200).json({
             response: objects,
-            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
+            message: objects?.length ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         logger.error(`Error in getAllWithQueries() function ${e}`)
@@ -63,10 +61,10 @@ module.exports.getCollaborators = async (req, res) => {
 module.exports.updateEmployeeFileDetails = async (req, res) => {
     const updates = Object.keys(req.body);
 
-    const { id } = req?.params;
-    const userId = req?.query?.userId;
+    // const { id } = req?.params;
+    const userId = req?.user?.userId;
     try {
-        const object = await File.findOne({ _id: id, userId: userId });
+        const object = await File.findOne({ userId: userId });
         // const object = objects[0];
         console.log('found object! : ', object)
         if (!object) return res.sendStatus(404);
@@ -84,7 +82,7 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
         return res.json(
             {
                 response: object,
-                message: req.t("SUCESS.EDITED")
+                message: req.t("SUCCESS.EDITED")
             }
         );
 
@@ -96,9 +94,9 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 
 // Working ✅
 module.exports.getEmployeeFileDetails = async (req, res) => {
-    const { param } = req.params
+    const userId = req.user?.userId
 
-    var query = matchQuery(param);
+    var query = matchQuery(userId);
 
     var aggregation = [
         {
@@ -221,7 +219,7 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
             : res.status(200).json(
                 {
                     response: object,
-                    message: req.t("SUCESS.RETRIEVED")
+                    message: req.t("SUCCESS.RETRIEVED")
 
                 }
             );
@@ -234,19 +232,19 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
 
 // Working ✅
 module.exports.deleteEmployeeFileDetails = async (req, res) => {
-    const { id } = req?.params;
-    const userId = req?.query?.userId;
+    // const { id } = req?.params;
+    const userId = req?.user?.userId;
 
     try {
         // const object = await File.aggregate(aggregation).deleteOne();
-        const object = await File.findOne({ _id: id, userId: userId });
+        const object = await File.findOne({ userId: userId });
         console.log(object);
-        object.enabled = false;
+        object.enabled ? object.enabled = false : res.status(403).json({ message: req.t("ERROR.FORBIDDEN") });
         object.save();
         return !object ? res.send(404) : res.json(
             {
                 response: object,
-                message: req.t("SUCESS.DELETED")
+                message: req.t("SUCCESS.DELETED")
             }
         );
     } catch (e) {
@@ -304,7 +302,7 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
 
         res.status(200).json({
             response: objects,
-            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
+            message: objects?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         logger.error(`Error in getAllWithQueries() function`)
@@ -335,7 +333,7 @@ module.exports.getAllFilesWithContractsByFileId = async (req, res) => {
         ])
         res.status(200).json({
             response: objects,
-            message: objects?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
+            message: objects?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         logger.error(`Error in getAll() function`)

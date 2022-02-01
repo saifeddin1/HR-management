@@ -3,7 +3,7 @@ const factory = require('./factory');
 const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { logger } = require('../config/logger');
 const mongoose = require('mongoose');
-
+const File = require('../models/File')
 
 module.exports.getAllTimeSheetDeclarations = factory.getAll(TimeSheetDeclaration);
 module.exports.getOneTimeSheetDeclaration = factory.getOne(TimeSheetDeclaration);
@@ -12,18 +12,43 @@ module.exports.updateTimeSheetDeclaration = factory.updateOne(TimeSheetDeclarati
 module.exports.deleteTimeSheetDeclaration = factory.deleteOne(TimeSheetDeclaration);
 
 
+module.exports.createDeclarationAsEmployee = async (req, res) => {
+    console.log("createDeclarationAsEmployee");
+    const declararation = new TimeSheetDeclaration();
+    const userFile = await File.findOne({ userId: req.user?.userId });
+    declararation.file = userFile._id;
+    console.log('created declararation! : ', declararation)
 
+    try {
+        await declararation.save();
+        console.log("Saved ");
+        res.status(201).json(
+            {
+                response: declararation,
+                message: req.t("SUCCESS.ADDED")
+            }
+        )
+
+    } catch (e) {
+        console.log(`Error in createDeclarationAsEmployee() function`)
+        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
+    }
+
+
+}
 
 module.exports.getEmployeeDeclarations = async (req, res) => {
-    var { param } = req.params;
+    const user = req.user
 
+    const userFile = await File.findOne({ userId: user.userId });
+    console.log("fileeeee: ", String(userFile._id));
     var aggregation = aggregationWithFacet(req, res);
+
     aggregation.unshift(
         {
-            '$match': { file: mongoose.Types.ObjectId(param) }
+            '$match': { file: userFile._id }
         }
     )
-
     aggregation.unshift(
         {
             '$lookup': {
@@ -66,7 +91,7 @@ module.exports.getEmployeeDeclarations = async (req, res) => {
         logger.debug("result : ", employeeDeclarations)
         res.status(200).json({
             response: employeeDeclarations,
-            message: employeeDeclarations?.length > 0 ? req.t("SUCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
+            message: employeeDeclarations?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
         logger.error(`Error in getEmployeeDeclarations() function`)
@@ -78,8 +103,9 @@ module.exports.getEmployeeDeclarations = async (req, res) => {
 }
 
 module.exports.updateDeclarationStatus = async (req, res) => {
-    const { id } = req.params;
-    // const { user } = req?.query
+    const user = req?.user
+    const { declarationId } = req.params;
+    logger.debug(user);
     const validationErrors = []
     const updates = Object.keys(req.body);
     const allowed = ["status"];
@@ -94,20 +120,23 @@ module.exports.updateDeclarationStatus = async (req, res) => {
 
 
     try {
-        const object = await TimeSheetDeclaration.findOne({ _id: id });
-        if (!object) return res.sendStatus(404);
+        const userFile = await File.findOne({ userId: user.userId });
+        logger.debug("User File:", userFile)
+
+        const declaration = await TimeSheetDeclaration.findOne({ _id: declarationId, file: userFile._id });
+        if (!declaration) return res.sendStatus(404);
         updates.forEach(update => {
-            object[update] = req.body[update];
+            declaration[update] = req.body[update];
         });
-        console.log("updated, obj; ", object);
-        await object.save();
+        console.log("updated, obj; ", declaration);
+        await declaration.save();
         console.log("saved");
 
-        return !object
+        return !declaration
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
-                    response: object,
+                    response: declaration,
                     message: req.t("SUCCESS.EDITED")
                 }
             );

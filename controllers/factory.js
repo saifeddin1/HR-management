@@ -1,5 +1,6 @@
-const logger = require('../config/logger').logger
-
+const { logger } = require('../config/logger')
+const File = require('../models/File')
+const { aggregationWithFacet } = require('../utils/aggregationWithFacet')
 
 const getAll = (Model) =>
 
@@ -106,7 +107,7 @@ const deleteOne = (Model) =>
             return !object ? res.send(404) : res.json(
                 {
                     response: object,
-                    message: req.t("SUCESS.DELETED")
+                    message: req.t("SUCCESS.DELETED")
                 }
             );
         } catch (e) {
@@ -118,10 +119,45 @@ const deleteOne = (Model) =>
 
     }
 
+const getEmployeeThing = (Model) =>
+    async (req, res) => {
+        const { userId } = req?.user;
+
+        const userFile = await File.findOne({ userId: userId });
+
+        var aggregation = aggregationWithFacet(req, res)
+        aggregation.unshift(
+            {
+                '$match': {
+                    file: userFile._id
+                }
+            }
+        )
+        logger.debug("before try, aggrgegatiojn :", aggregation);
+
+        try {
+
+            const employeeWith = await Model.aggregate(aggregation)
+
+            logger.debug(`employeeWith${Model.modelName}`, employeeWith);
+
+            res.status(200).json({
+                response: employeeWith,
+                message: employeeWith?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
+            })
+        } catch (e) {
+            return res.status(400).json({
+                message: req.t("ERROR.UNAUTHORIZED")
+            });
+        }
+    }
+
+
 module.exports = {
     getAll,
     getOne,
     createOne,
     updateOne,
-    deleteOne
+    deleteOne,
+    getEmployeeThing
 }

@@ -7,7 +7,8 @@ const TimeSheetDeclarationSchema = Schema(
     {
         file: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'File'
+            ref: 'File',
+            unique: true
         },
         month: {
             type: Number,
