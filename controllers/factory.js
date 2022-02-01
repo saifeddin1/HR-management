@@ -122,7 +122,7 @@ const getEmployeeThing = (Model) =>
     async (req, res) => {
         const { userId } = req?.user;
         try {
-            console.log("ddddddddddddddd");
+            console.log("Entered Get Employee" + Model.modelName);
 
             const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
             console.log(`employeeWith${Model.modelName}`, employeeWith);
