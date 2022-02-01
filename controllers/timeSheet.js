@@ -83,19 +83,19 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
 
 
 
-    console.log("aggregation ", aggregation);
+    logger.info("aggregation ", aggregation);
     try {
         const timeSheetDeclarationResult = await TimeSheetDeclaration.aggregate(aggregation);
-        console.log("found array", timeSheetDeclarationResult);
+        logger.info("found array", timeSheetDeclarationResult);
         if (timeSheetDeclarationResult?.length) {
             // case array full :
             // we have timesheet declaration with status ['declared, "accpteed"] in the chosen month
             // return BAD REQUEST
-            console.log("Im here, array full :", timeSheetDeclarationResult);
+            logger.info("Im here, array full :", timeSheetDeclarationResult);
             return res.status(400).json({ message: req.t("ERROR.ALREADY_EXISTS") })
         } else {
             // case empty array , we can modify or create timesheet
-            console.log("Im here, array empty");
+            logger.info("Im here, array empty");
 
             await TimeSheet.findByIdAndUpdate(timeSheetId, { note: req.body.note, workingHours: req.body.workingHours })
             return res.status(200).json({
@@ -105,7 +105,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
 
 
     } catch (e) {
-        console.log(`Error in updateTimeSheetForEmployee() function: ${e.message}`)
+        logger.info(`Error in updateTimeSheetForEmployee() function: ${e.message}`)
         return res.status(400).json({
             message: req.t("ERROR.UNAUTHORIZED")
         })

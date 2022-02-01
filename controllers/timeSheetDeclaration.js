@@ -13,16 +13,16 @@ module.exports.deleteTimeSheetDeclaration = factory.deleteOne(TimeSheetDeclarati
 
 
 module.exports.createDeclarationAsEmployee = async (req, res) => {
-    console.log("createDeclarationAsEmployee");
+    logger.info("createDeclarationAsEmployee");
     const userId = req.user?.userId
     const declararation = new TimeSheetDeclaration();
     // const userFile = await File.findOne({  });
     declararation.userId = mongoose.Types.ObjectId(userId);
-    console.log('created declararation! : ', declararation)
+    logger.info('created declararation! : ', declararation)
 
     try {
         await declararation.save();
-        console.log("Saved ");
+        logger.info("Saved ");
         res.status(201).json(
             {
                 response: declararation,
@@ -31,7 +31,7 @@ module.exports.createDeclarationAsEmployee = async (req, res) => {
         )
 
     } catch (e) {
-        console.log(`Error in createDeclarationAsEmployee() function: ${e.message}`)
+        logger.info(`Error in createDeclarationAsEmployee() function: ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
@@ -125,9 +125,9 @@ module.exports.updateDeclarationStatus = async (req, res) => {
         updates.forEach(update => {
             declaration[update] = req.body[update];
         });
-        console.log("updated, obj; ", declaration);
+        logger.info("updated, obj; ", declaration);
         await declaration.save();
-        console.log("saved");
+        logger.info("saved");
 
         return !declaration
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })

@@ -18,7 +18,7 @@ module.exports.deleteFile = factory.deleteOne(File);
 module.exports.getCollaborators = async (req, res) => {
     const userId = req.user?.userId;
     var aggregation = aggregationWithFacet(req, res);
-    console.log("req.userid", userId);
+    logger.info("req.userid", userId);
     var query = [
 
         { userRef: { '$ne': userId } }
@@ -66,18 +66,18 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
     try {
         const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
         // const object = objects[0];
-        console.log('found object! : ', object)
+        logger.info('found object! : ', object)
         if (!object) return res.sendStatus(404);
         updates.forEach(update => {
-            console.log('key : ', update)
+            logger.info('key : ', update)
             object[update] = req.body[update];
         });
 
-        console.log('updated object! : ', object)
+        logger.info('updated object! : ', object)
 
         await object.save();
 
-        console.log('saved object! : ', object)
+        logger.info('saved object! : ', object)
 
         return res.json(
             {
@@ -230,7 +230,7 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
     try {
         // const object = await File.aggregate(aggregation).deleteOne();
         const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
-        console.log(object);
+        logger.info(object);
         object.enabled ? object.enabled = false : res.status(403).json({ message: req.t("ERROR.FORBIDDEN") });
         object.save();
         return !object ? res.send(404) : res.json(

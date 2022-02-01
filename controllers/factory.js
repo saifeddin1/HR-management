@@ -53,7 +53,7 @@ const createOne = (Model) =>
 
         try {
             await object.save();
-            console.log("Saved ");
+            logger.info("Saved ");
             res.status(201).json(
                 {
                     response: object,
@@ -122,10 +122,10 @@ const getEmployeeThing = (Model) =>
     async (req, res) => {
         const { userId } = req?.user;
         try {
-            console.log("Entered Get Employee" + Model.modelName);
+            logger.info("Entered Get Employee" + Model.modelName);
 
             const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
-            console.log(`employeeWith${Model.modelName}`, employeeWith);
+            logger.info(`employeeWith${Model.modelName}`, employeeWith);
             !employeeWith ?
                 req.t("ERROR.NOT_FOUND")
                 : res.status(200).json({
