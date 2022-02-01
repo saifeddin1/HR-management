@@ -5,9 +5,8 @@ const { Schema } = mongoose;
 
 const interviewSchema = Schema(
     {
-        file: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'File'
+        userId: {
+            type: mongoose.Schema.Types.ObjectId
         },
         date: Date,
         title: String,

@@ -1,6 +1,7 @@
 const { TimeOff } = require('../models/TimeOff');
 const File = require('../models/File');
 const factory = require('./factory');
+const mongoose = require('mongoose');
 
 module.exports.getAllTimeOffs = factory.getAll(TimeOff);
 module.exports.getOneTimeOff = factory.getOne(TimeOff);
@@ -11,7 +12,8 @@ module.exports.employeeTimeoffHistory = factory.getEmployeeThing(TimeOff)
 
 
 module.exports.updateEmployeeTimeoff = async (req, res) => {
-    const { id } = req.params;
+    const timeOffId = req.params.id;
+    const userId = req.user?.userId
     const validationErrors = []
     const updates = Object.keys(req.body);
     const allowedFields = ["startDate", "offDays"]
@@ -27,26 +29,26 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
     try {
         console.log("starting updateEmployeeTimeoff");
-        const userFile = await File.findOne({ userId: req.user?.userId });
+        // const userFile = await File.findOne({ userId: req.user?.userId });
 
-        const object = await TimeOff.findOne({ file: userFile._id, _id: id });
-        if (!object) return res.sendStatus(404);
-        if (!(object.status === "Pending")) return res.status(400).json({ message: req.t("SUCCESS.FORBIDEN") });
+        const timeOff = await TimeOff.findOne({ userId: mongoose.Types.ObjectId(userId), _id: timeOffId });
+        if (!timeOff) return res.sendStatus(404);
+        if (!(timeOff.status === "Pending")) return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
         updates.forEach(update => {
-            object[update] = req.body[update];
+            timeOff[update] = req.body[update];
         });
-        await object.save();
+        await timeOff.save();
         console.log("saved obj");
-        return !object
+        return !timeOff
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
-                    response: object,
+                    response: timeOff,
                     message: req.t("SUCCESS.EDITED")
                 }
             );
     } catch (e) {
-        console.log(`Error in updateEmployeeTimeoff() function`)
+        console.log(`Error in updateEmployeeTimeoff() function: `, e.message)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
@@ -55,7 +57,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
 module.exports.createTimeOffAsEmployee = async (req, res) => {
     const validationErrors = []
-
+    const { userId } = req.user;
     console.log("createTimeOffAsEmployee");
     const inputFields = Object.keys(req.body);
 
@@ -67,15 +69,15 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
+        return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
 
     const timeOffRequest = new TimeOff();
     inputFields.forEach(input => {
         timeOffRequest[input] = req.body[input];
     });
 
-    const userFile = await File.findOne({ userId: req.user?.userId });
-    timeOffRequest.file = userFile._id;
+    // const userFile = await File.findOne({ userId: req.user?.userId });
+    timeOffRequest.userId = mongoose.Types.ObjectId(userId);
     console.log('created timoff! : ', timeOffRequest)
 
     try {
@@ -89,7 +91,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
         )
 
     } catch (e) {
-        console.log(`Error in createOne() function`)
+        console.log(`Error in createOne() function: ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
@@ -97,7 +99,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
 
 // for HR Agent
 module.exports.updateStatus = async (req, res) => {
-    const { id } = req.params;
+    const timeOffId = req.params.id;
     // const { user } = req?.query
     const validationErrors = []
     const updates = Object.keys(req.body);
@@ -113,7 +115,7 @@ module.exports.updateStatus = async (req, res) => {
 
 
     try {
-        const object = await TimeOff.findOne({ _id: id });
+        const object = await TimeOff.findOne({ _id: timeOffId });
         if (!object) return res.sendStatus(404);
         updates.forEach(update => {
             object[update] = req.body[update];
@@ -131,6 +133,8 @@ module.exports.updateStatus = async (req, res) => {
                 }
             );
     } catch (e) {
+        console.log(`Error in updateTimeOffStatus() function: ${e.message}`)
+
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 

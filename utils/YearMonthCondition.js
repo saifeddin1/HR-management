@@ -1,4 +1,4 @@
-moodule.exports.YearMonthCondition = (yearMonth) => yearMonth ? [ // REMOVE INTO UTILS
+const YearMonthCondition = (yearMonth) => yearMonth ? [ // REMOVE INTO UTILS
     {
         '$eq': [
             {
@@ -30,3 +30,6 @@ moodule.exports.YearMonthCondition = (yearMonth) => yearMonth ? [ // REMOVE INTO
     }
 
 ] : [];
+
+
+module.exports = YearMonthCondition;

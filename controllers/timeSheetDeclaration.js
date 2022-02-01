@@ -14,9 +14,10 @@ module.exports.deleteTimeSheetDeclaration = factory.deleteOne(TimeSheetDeclarati
 
 module.exports.createDeclarationAsEmployee = async (req, res) => {
     console.log("createDeclarationAsEmployee");
+    const userId = req.user?.userId
     const declararation = new TimeSheetDeclaration();
-    const userFile = await File.findOne({ userId: req.user?.userId });
-    declararation.file = userFile._id;
+    // const userFile = await File.findOne({  });
+    declararation.userId = mongoose.Types.ObjectId(userId);
     console.log('created declararation! : ', declararation)
 
     try {
@@ -30,7 +31,7 @@ module.exports.createDeclarationAsEmployee = async (req, res) => {
         )
 
     } catch (e) {
-        console.log(`Error in createDeclarationAsEmployee() function`)
+        console.log(`Error in createDeclarationAsEmployee() function: ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
@@ -38,15 +39,15 @@ module.exports.createDeclarationAsEmployee = async (req, res) => {
 }
 
 module.exports.getEmployeeDeclarations = async (req, res) => {
-    const user = req.user
+    const userId = req.user?.userId
 
-    const userFile = await File.findOne({ userId: user.userId });
-    console.log("fileeeee: ", String(userFile._id));
+
+    // const userFile = await File.findOne({ userId: user.userId });
     var aggregation = aggregationWithFacet(req, res);
 
     aggregation.unshift(
         {
-            '$match': { file: userFile._id }
+            '$match': { userId: mongoose.Types.ObjectId(userId) }
         }
     )
     aggregation.unshift(
@@ -54,7 +55,7 @@ module.exports.getEmployeeDeclarations = async (req, res) => {
             '$lookup': {
                 'from': 'timesheets',
                 'let': {
-                    'currId': '$file', // get the local fild "file" in t-sheet-declaration
+                    'currId': '$userId', // get the local fild "file" in t-sheet-declaration
                     'currMonth': '$month'
                 },
                 'pipeline': [
@@ -64,10 +65,10 @@ module.exports.getEmployeeDeclarations = async (req, res) => {
                                 '$and': [
                                     {
                                         '$eq': [
-                                            '$file', '$$currId'
+                                            '$userId', '$$currId'
                                         ]
                                     },
-                                    { "$eq": [{ "$month": "$date" }, "$$currMonth"] }
+                                    // { "$eq": [{ "$month": "$date" }, "$$currMonth"] }
                                 ]
                             }
                         },
@@ -76,6 +77,7 @@ module.exports.getEmployeeDeclarations = async (req, res) => {
                     {
                         '$project': {
                             date: 1,
+                            note: 1
                         }
                     }
                 ],
@@ -103,9 +105,8 @@ module.exports.getEmployeeDeclarations = async (req, res) => {
 }
 
 module.exports.updateDeclarationStatus = async (req, res) => {
-    const user = req?.user
+    const { userId } = req?.user
     const { declarationId } = req.params;
-    logger.debug(user);
     const validationErrors = []
     const updates = Object.keys(req.body);
     const allowed = ["status"];
@@ -118,13 +119,9 @@ module.exports.updateDeclarationStatus = async (req, res) => {
     if (!isValidOperation)
         return res.status(403).send({ message: req.t("ERROR.FORBIDDEN") });
 
-
     try {
-        const userFile = await File.findOne({ userId: user.userId });
-        logger.debug("User File:", userFile)
-
-        const declaration = await TimeSheetDeclaration.findOne({ _id: declarationId, file: userFile._id });
-        if (!declaration) return res.sendStatus(404);
+        const declaration = await TimeSheetDeclaration.findOne({ _id: declarationId, userId: mongoose.Types.ObjectId(userId) });
+        if (!declaration) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") });
         updates.forEach(update => {
             declaration[update] = req.body[update];
         });

@@ -3,51 +3,18 @@ const { TimeSheetDeclaration } = require('../models/TimeSheetDeclaration');
 const factory = require('./factory');
 const { logger } = require('../config/logger')
 const mongoose = require('mongoose');
-const File = require('../models/File');
-// const YearMonthCondition = require('../utils/YearMonthCondition')
+const YearMonthCondition = require('../utils/YearMonthCondition')
 
 module.exports.getAllTimeSheets = factory.getAll(TimeSheet);
 module.exports.getOneTimeSheet = factory.getOne(TimeSheet);
 module.exports.createNewTimeSheet = factory.createOne(TimeSheet);
 module.exports.updateTimeSheet = factory.updateOne(TimeSheet);
 module.exports.deleteTimeSheet = factory.deleteOne(TimeSheet);
-
-const YearMonthCondition = (yearMonth) => yearMonth ? [ // REMOVE INTO UTILS
-    {
-        '$eq': [
-            {
-                '$substr': [
-                    {
-                        '$arrayElemAt': [
-
-                            {
-
-                                '$split': [
-
-                                    {
-
-                                        '$toString': '$updatedAt'
-
-                                    }, 'T'
-
-                                ]
-
-                            }, 0
-
-                        ]
-
-                    }, 0, 7
-
-                ]
-            }, yearMonth
-        ]
-    }
-
-] : [];
+module.exports.getEmployeeTimeSheets = factory.getEmployeeThing(TimeSheet);
 
 module.exports.updateTimeSheetForEmployee = async (req, res) => {
     // req.body : workinghours, note, date 
-
+    const { userId } = req.user;
     const { timeSheetId } = req.params
     const validationErrors = []
     const updates = Object.keys(req.body);
@@ -68,7 +35,6 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
 
 
     // const allowed = ["status"];  
-    const userFile = await File.findOne({ userId: req.user?.userId });
     const allowed = ["workingHours", "note", "date"];
     const isValidOperation = updates.every(update => {
         const isValid = allowed.includes(update);
@@ -96,7 +62,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
                             },
                             {
                                 '$eq': [
-                                    '$file', userFile._id
+                                    '$userId', mongoose.Types.ObjectId(userId)
                                 ]
 
                             },
@@ -125,7 +91,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
             // case array full :
             // we have timesheet declaration with status ['declared, "accpteed"] in the chosen month
             // return BAD REQUEST
-            console.log("Im here, array full ");
+            console.log("Im here, array full :", timeSheetDeclarationResult);
             return res.status(400).json({ message: req.t("ERROR.ALREADY_EXISTS") })
         } else {
             // case empty array , we can modify or create timesheet
@@ -139,7 +105,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
 
 
     } catch (e) {
-        logger.debug("error", e)
+        console.log(`Error in updateTimeSheetForEmployee() function: ${e.message}`)
         return res.status(400).json({
             message: req.t("ERROR.UNAUTHORIZED")
         })

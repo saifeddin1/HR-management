@@ -18,14 +18,14 @@ module.exports.deleteFile = factory.deleteOne(File);
 module.exports.getCollaborators = async (req, res) => {
     const userId = req.user?.userId;
     var aggregation = aggregationWithFacet(req, res);
-    logger.debug("req.userid", userId);
+    console.log("req.userid", userId);
     var query = [
-        { userId: { '$ne': userId } },
+
         { userRef: { '$ne': userId } }
     ]
     var ObjectId = require('mongoose').Types.ObjectId;
     if (typeof userId == "string" && ObjectId.isValid(userId)) {// userId is a valid objectId
-        query.push({ _id: { '$ne': mongoose.Types.ObjectId(userId) } })
+        query.push({ userId: { '$ne': mongoose.Types.ObjectId(userId) } },)
     }
     aggregation.unshift(
         {
@@ -47,7 +47,7 @@ module.exports.getCollaborators = async (req, res) => {
             message: objects?.length ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
-        logger.error(`Error in getAllWithQueries() function ${e}`)
+        logger.error(`Error in getAllWithQueries() function : ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
@@ -64,7 +64,7 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
     // const { id } = req?.params;
     const userId = req?.user?.userId;
     try {
-        const object = await File.findOne({ userId: userId });
+        const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
         // const object = objects[0];
         console.log('found object! : ', object)
         if (!object) return res.sendStatus(404);
@@ -87,7 +87,7 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
         );
 
     } catch (e) {
-        logger.error(`Error in updateEmployeeFileDetails() function: ${e}`)
+        logger.error(`Error in updateEmployeeFileDetails() function: ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 }
@@ -113,21 +113,13 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
             {
                 '$lookup': {
                     'from': 'contracts',
-                    'let': {
-                        'fileId': '$_id' // Id of the current file
-                    },
+                    // 'let': {
+                    //     'fileId': '$_id' // Id of the current file
+                    // },
                     'pipeline': [
                         {
                             '$match': {
-                                '$expr': {
-                                    '$and': [
-                                        {
-                                            '$eq': [
-                                                '$file', '$$fileId'
-                                            ]
-                                        }
-                                    ]
-                                }
+                                '$or': query
                             }
                         },
                         {
@@ -224,7 +216,7 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
                 }
             );
     } catch (e) {
-        logger.error(`Error in getEmployeeFileDetails() function`, e)
+        logger.error(`Error in getEmployeeFileDetails() function: `, e.message)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") })
     }
 
@@ -237,7 +229,7 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
 
     try {
         // const object = await File.aggregate(aggregation).deleteOne();
-        const object = await File.findOne({ userId: userId });
+        const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
         console.log(object);
         object.enabled ? object.enabled = false : res.status(403).json({ message: req.t("ERROR.FORBIDDEN") });
         object.save();
@@ -248,7 +240,7 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
             }
         );
     } catch (e) {
-        logger.error(`Error in deleteEmployeeFileDetails() function`)
+        logger.error(`Error in deleteEmployeeFileDetails() function: ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
@@ -256,8 +248,11 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
 
 
 module.exports.getAllFilesWithQuries = async (req, res) => {
+    const { userId } = req.user
     try {
         var aggregation = aggregationWithFacet(req, res);
+
+
         if (req?.query?.withContracts) {
             aggregation.unshift(
                 // { '$match': { enabled: true } },
@@ -265,7 +260,7 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
                     '$lookup': {
                         'from': 'contracts',
                         'let': {
-                            'fileId': '$_id' // Id of the current file
+                            'user': '$userId' // Id of the current file
                         },
                         'pipeline': [
                             {
@@ -274,7 +269,7 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
                                         '$and': [
                                             {
                                                 '$eq': [
-                                                    '$file', '$$fileId'
+                                                    '$userId', '$$user'
                                                 ]
                                             }
                                         ]
@@ -305,39 +300,10 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
             message: objects?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
         })
     } catch (e) {
-        logger.error(`Error in getAllWithQueries() function`)
+        logger.error(`Error in getAllWithQueries() function: ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 }
 
 
-// tatiaia/:fileId
-module.exports.getAllFilesWithContractsByFileId = async (req, res) => {
-    try {
-        const { fileId } = req.params
-        const objects = await File.aggregate([
-            {
-                $match: {
-                    _id: new Types.ObjectId(fileId)
-                }
-            },
-            {
-                $lookup:
-                {
-                    from: 'contracts',//<collection to join>,
-                    localField: '_id',
-                    foreignField: 'file',
-                    as: 'contracts'
-                }
-            }
-        ])
-        res.status(200).json({
-            response: objects,
-            message: objects?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
-        })
-    } catch (e) {
-        logger.error(`Error in getAll() function`)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
-    }
-}
 

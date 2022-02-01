@@ -1,6 +1,5 @@
 const { logger } = require('../config/logger')
-const File = require('../models/File')
-const { aggregationWithFacet } = require('../utils/aggregationWithFacet')
+const mongoose = require('mongoose')
 
 const getAll = (Model) =>
 
@@ -122,32 +121,22 @@ const deleteOne = (Model) =>
 const getEmployeeThing = (Model) =>
     async (req, res) => {
         const { userId } = req?.user;
-
-        const userFile = await File.findOne({ userId: userId });
-
-        var aggregation = aggregationWithFacet(req, res)
-        aggregation.unshift(
-            {
-                '$match': {
-                    file: userFile._id
-                }
-            }
-        )
-        logger.debug("before try, aggrgegatiojn :", aggregation);
-
         try {
+            console.log("ddddddddddddddd");
 
-            const employeeWith = await Model.aggregate(aggregation)
-
-            logger.debug(`employeeWith${Model.modelName}`, employeeWith);
-
-            res.status(200).json({
-                response: employeeWith,
-                message: employeeWith?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
-            })
+            const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
+            console.log(`employeeWith${Model.modelName}`, employeeWith);
+            !employeeWith ?
+                req.t("ERROR.NOT_FOUND")
+                : res.status(200).json({
+                    response: employeeWith,
+                    message: req.t("SUCCESS.RETRIEVED")
+                })
         } catch (e) {
+            logger.debug(JSON.stringify(e))
             return res.status(400).json({
                 message: req.t("ERROR.UNAUTHORIZED")
+
             });
         }
     }
