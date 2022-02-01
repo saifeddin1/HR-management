@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const timeSheetController = require('../../controllers/timeSheet')
 
-router.put('/updateTimeSheetForEmployee/:fileId/:timeSheetId', timeSheetController.updateTimeSheetForEmployee);
+router.put('/updateTimeSheetForEmployee/:timeSheetId', timeSheetController.updateTimeSheetForEmployee);
+router.get('/getEmployeeTimeSheets', timeSheetController.getEmployeeTimeSheets);
 router.get('/', timeSheetController.getAllTimeSheets);
 router.post('/', timeSheetController.createNewTimeSheet);
 router.get('/:id', timeSheetController.getOneTimeSheet);

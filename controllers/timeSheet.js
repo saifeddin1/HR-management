@@ -2,17 +2,20 @@ const { TimeSheet } = require('../models/TimeSheet');
 const { TimeSheetDeclaration } = require('../models/TimeSheetDeclaration');
 const factory = require('./factory');
 const { logger } = require('../config/logger')
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const YearMonthCondition = require('../utils/YearMonthCondition')
+
 module.exports.getAllTimeSheets = factory.getAll(TimeSheet);
 module.exports.getOneTimeSheet = factory.getOne(TimeSheet);
 module.exports.createNewTimeSheet = factory.createOne(TimeSheet);
 module.exports.updateTimeSheet = factory.updateOne(TimeSheet);
 module.exports.deleteTimeSheet = factory.deleteOne(TimeSheet);
+module.exports.getEmployeeTimeSheets = factory.getEmployeeThing(TimeSheet);
 
 module.exports.updateTimeSheetForEmployee = async (req, res) => {
     // req.body : workinghours, note, date 
-
-    const { fileId, timeSheetId } = req.params
+    const { userId } = req.user;
+    const { timeSheetId } = req.params
     const validationErrors = []
     const updates = Object.keys(req.body);
 
@@ -39,40 +42,9 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
         return isValid;
     });
     // var yearMonth = req.body?.date.toISOString().split("T")[0].substr(0, 7);
-    var yearMonth = "2022-01"
+    var yearMonth = "2022-02"
 
-    const YearMonthCondition = (yearMonth) => yearMonth ? [ // REMOVE INTO UTILS
-        {
-            '$eq': [
-                {
-                    '$substr': [
-                        {
-                            '$arrayElemAt': [
 
-                                {
-
-                                    '$split': [
-
-                                        {
-
-                                            '$toString': '$updatedAt'
-
-                                        }, 'T'
-
-                                    ]
-
-                                }, 0
-
-                            ]
-
-                        }, 0, 7
-
-                    ]
-                }, yearMonth
-            ]
-        }
-
-    ] : [];
     if (!isValidOperation)
         return res.status(403).send({ message: req.t("ERROR.FORBIDDEN") });
 
@@ -89,15 +61,17 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
 
                             },
                             {
+                                '$eq': [
+                                    '$userId', mongoose.Types.ObjectId(userId)
+                                ]
+
+                            },
+                            {
                                 '$in': [
                                     '$status', ['approved', 'declared']
                                 ]
                             },
-                            {
-                                '$eq': [
-                                    '$file', mongoose.Types.ObjectId(fileId)
-                                ]
-                            },
+
                             ...YearMonthCondition(yearMonth)
                         ]
 
@@ -117,9 +91,12 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
             // case array full :
             // we have timesheet declaration with status ['declared, "accpteed"] in the chosen month
             // return BAD REQUEST
+            console.log("Im here, array full :", timeSheetDeclarationResult);
             return res.status(400).json({ message: req.t("ERROR.ALREADY_EXISTS") })
         } else {
             // case empty array , we can modify or create timesheet
+            console.log("Im here, array empty");
+
             await TimeSheet.findByIdAndUpdate(timeSheetId, { note: req.body.note, workingHours: req.body.workingHours })
             return res.status(200).json({
                 message: req.t("SUCCESS.EDITED"),
@@ -128,7 +105,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
 
 
     } catch (e) {
-        logger.debug("error", e)
+        console.log(`Error in updateTimeSheetForEmployee() function: ${e.message}`)
         return res.status(400).json({
             message: req.t("ERROR.UNAUTHORIZED")
         })

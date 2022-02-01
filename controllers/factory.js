@@ -1,5 +1,5 @@
-const logger = require('../config/logger').logger
-
+const { logger } = require('../config/logger')
+const mongoose = require('mongoose')
 
 const getAll = (Model) =>
 
@@ -106,7 +106,7 @@ const deleteOne = (Model) =>
             return !object ? res.send(404) : res.json(
                 {
                     response: object,
-                    message: req.t("SUCESS.DELETED")
+                    message: req.t("SUCCESS.DELETED")
                 }
             );
         } catch (e) {
@@ -118,10 +118,35 @@ const deleteOne = (Model) =>
 
     }
 
+const getEmployeeThing = (Model) =>
+    async (req, res) => {
+        const { userId } = req?.user;
+        try {
+            console.log("ddddddddddddddd");
+
+            const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
+            console.log(`employeeWith${Model.modelName}`, employeeWith);
+            !employeeWith ?
+                req.t("ERROR.NOT_FOUND")
+                : res.status(200).json({
+                    response: employeeWith,
+                    message: req.t("SUCCESS.RETRIEVED")
+                })
+        } catch (e) {
+            logger.debug(JSON.stringify(e))
+            return res.status(400).json({
+                message: req.t("ERROR.UNAUTHORIZED")
+
+            });
+        }
+    }
+
+
 module.exports = {
     getAll,
     getOne,
     createOne,
     updateOne,
-    deleteOne
+    deleteOne,
+    getEmployeeThing
 }

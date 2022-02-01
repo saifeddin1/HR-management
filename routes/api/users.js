@@ -45,7 +45,7 @@ router.patch('/:id', async (req, res) => {
   });
 
   if (!isValidOperation)
-    return res.status(400).send({ error: `Invalid updates: ${validationErrors.join(',')}` });
+    return res.status(400).send({ message: req.t("ERROR.FORBIDDEN") });
 
   try {
     const _id = req.params.id;

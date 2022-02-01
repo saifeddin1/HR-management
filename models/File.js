@@ -7,9 +7,11 @@ const { Schema } = mongoose;
 const fileSchema = Schema(
     {
         userRef: String,
-        userId: String,
+        userId: {
+            type: mongoose.Schema.Types.ObjectId
+        },
         timeOffBalance: Number,
-        profile: {
+        prouserId: {
             type: profileSchema,
         },
         enabled: {

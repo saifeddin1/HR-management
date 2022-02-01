@@ -5,9 +5,8 @@ const { Schema } = mongoose;
 
 const ContractSchema = Schema(
     {
-        file: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'File'
+        userId: {
+            type: mongoose.Schema.Types.ObjectId
         },
         // salary: {
         //     type: salarySchema

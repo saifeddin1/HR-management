@@ -1,58 +1,19 @@
 const { TimeOff } = require('../models/TimeOff');
+const File = require('../models/File');
 const factory = require('./factory');
+const mongoose = require('mongoose');
 
 module.exports.getAllTimeOffs = factory.getAll(TimeOff);
 module.exports.getOneTimeOff = factory.getOne(TimeOff);
 module.exports.createNewTimeOff = factory.createOne(TimeOff);
 module.exports.updateTimeOff = factory.updateOne(TimeOff);
 module.exports.deleteTimeOff = factory.deleteOne(TimeOff);
+module.exports.employeeTimeoffHistory = factory.getEmployeeThing(TimeOff)
 
-module.exports.employeeTimeoffHistory = async (req, res) => {
-    const { id } = req.params;
-    try {
-        console.log("starting employeeTimeoff");
-        const objects = await TimeOff.find({ file: id });
-        console.log("obj:", objects);
-        return !objects
-            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
-            : res.status(200).json(
-                {
-                    response: objects,
-                    message: req.t("SUCESS.RETRIEVED")
-                }
-            );
-    } catch (e) {
-        console.log(`Error in employeeTimeoff() function`)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
-    }
-
-}
-
-module.exports.employeeTimeoffDetails = async (req, res) => {
-    const { id } = req.params;
-    const { t_off_id } = req?.query
-    try {
-        console.log("starting employeeTimeoffDetails");
-        const object = await TimeOff.findOne({ file: id, _id: t_off_id });
-        console.log("obj:", object);
-        return !object
-            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
-            : res.status(200).json(
-                {
-                    response: object,
-                    message: req.t("SUCESS.RETRIEVED")
-                }
-            );
-    } catch (e) {
-        console.log(`Error in employeeTimeoffDetails() function`)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
-    }
-
-}
 
 module.exports.updateEmployeeTimeoff = async (req, res) => {
-    const { id } = req.params;
-    const { t_off_id } = req?.query
+    const timeOffId = req.params.id;
+    const userId = req.user?.userId
     const validationErrors = []
     const updates = Object.keys(req.body);
     const allowedFields = ["startDate", "offDays"]
@@ -68,53 +29,35 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
     try {
         console.log("starting updateEmployeeTimeoff");
-        const object = await TimeOff.findOne({ file: id, _id: t_off_id });
-        if (!object) return res.sendStatus(404);
-        if (!(object.status === "Pending")) return res.status(400).json({ message: req.t("SUCESS.FORBIDEN") });
+        // const userFile = await File.findOne({ userId: req.user?.userId });
+
+        const timeOff = await TimeOff.findOne({ userId: mongoose.Types.ObjectId(userId), _id: timeOffId });
+        if (!timeOff) return res.sendStatus(404);
+        if (!(timeOff.status === "Pending")) return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
         updates.forEach(update => {
-            object[update] = req.body[update];
+            timeOff[update] = req.body[update];
         });
-        await object.save();
+        await timeOff.save();
         console.log("saved obj");
-        return !object
+        return !timeOff
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
                 {
-                    response: object,
-                    message: req.t("SUCESS.EDITED")
+                    response: timeOff,
+                    message: req.t("SUCCESS.EDITED")
                 }
             );
     } catch (e) {
-        console.log(`Error in updateEmployeeTimeoff() function`)
+        console.log(`Error in updateEmployeeTimeoff() function: `, e.message)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
 }
 
-module.exports.deleteEmployeeTimeoff = async (req, res) => {
-    const { id } = req.params;
-    const { t_off_id } = req?.query
-    try {
-        console.log("starting deleteEmployeeTimeoff");
-        const object = await TimeOff.findOne({ file: id, _id: t_off_id }).deleteOne();
-
-        return !object
-            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
-            : res.status(200).json(
-                {
-                    response: object,
-                    message: req.t("SUCCESS.DELETED")
-                }
-            );
-    } catch (e) {
-        console.log(`Error in deleteEmployeeTimeoff() function`)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
-    }
-
-}
 
 module.exports.createTimeOffAsEmployee = async (req, res) => {
     const validationErrors = []
+    const { userId } = req.user;
     console.log("createTimeOffAsEmployee");
     const inputFields = Object.keys(req.body);
 
@@ -126,26 +69,29 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
+        return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
 
-    const object = new TimeOff();
+    const timeOffRequest = new TimeOff();
     inputFields.forEach(input => {
-        object[input] = req.body[input];
+        timeOffRequest[input] = req.body[input];
     });
-    console.log('created timoff! : ', object)
+
+    // const userFile = await File.findOne({ userId: req.user?.userId });
+    timeOffRequest.userId = mongoose.Types.ObjectId(userId);
+    console.log('created timoff! : ', timeOffRequest)
 
     try {
-        await object.save();
+        await timeOffRequest.save();
         console.log("Saved ");
         res.status(201).json(
             {
-                response: object,
+                response: timeOffRequest,
                 message: req.t("SUCCESS.ADDED")
             }
         )
 
     } catch (e) {
-        console.log(`Error in createOne() function`)
+        console.log(`Error in createOne() function: ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
@@ -153,7 +99,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
 
 // for HR Agent
 module.exports.updateStatus = async (req, res) => {
-    const { id } = req.params;
+    const timeOffId = req.params.id;
     // const { user } = req?.query
     const validationErrors = []
     const updates = Object.keys(req.body);
@@ -169,7 +115,7 @@ module.exports.updateStatus = async (req, res) => {
 
 
     try {
-        const object = await TimeOff.findOne({ _id: id });
+        const object = await TimeOff.findOne({ _id: timeOffId });
         if (!object) return res.sendStatus(404);
         updates.forEach(update => {
             object[update] = req.body[update];
@@ -187,6 +133,8 @@ module.exports.updateStatus = async (req, res) => {
                 }
             );
     } catch (e) {
+        console.log(`Error in updateTimeOffStatus() function: ${e.message}`)
+
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 

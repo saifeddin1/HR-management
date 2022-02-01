@@ -6,15 +6,14 @@ const { Schema } = mongoose;
 
 const timeSheetSchema = Schema(
     {
-        file: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'File'
+        userId: {
+            type: mongoose.Schema.Types.ObjectId
         },
         date: {
             type: Date,
             default: Date.now
         },
-        workingHours: Number, 
+        workingHours: Number,
         note: String,
         enabled: {
             type: Boolean,
