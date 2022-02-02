@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const interviewController = require('../../controllers/interview')
 
+router.get('/employeeInterviews', interviewController.getEmployeeInterviews);
 router.get('/', interviewController.getAllInterviews);
 router.post('/', interviewController.createNewInterview);
 router.get('/:id', interviewController.getOneInterview);
