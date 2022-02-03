@@ -1,11 +1,14 @@
 const { logger } = require('../config/logger')
 const mongoose = require('mongoose')
+const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
+
 
 const getAll = (Model) =>
-
+    // TO DO : pagination 
     async (req, res) => {
         try {
-            const objects = await Model.find({})
+            var aggregation = aggregationWithFacet(req, res);
+            const objects = await Model.aggregate(aggregation)
             res.status(200).json({
                 response: objects,
                 message: objects?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
