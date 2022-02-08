@@ -123,7 +123,7 @@ const deleteOne = (Model) =>
 
 const getEmployeeThing = (Model) =>
     async (req, res) => {
-        const { userId } = req?.user;
+        const userId = req.user.id;
         try {
             logger.info("Entered Get Employee" + Model.modelName);
 

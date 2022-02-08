@@ -14,7 +14,7 @@ module.exports.getEmployeeTimeSheets = factory.getEmployeeThing(TimeSheet);
 
 module.exports.updateTimeSheetForEmployee = async (req, res) => {
     // req.body : workinghours, note, date 
-    const { userId } = req.user;
+    const userId = req.user.id;
     const { timeSheetId } = req.params
     const validationErrors = []
     const updates = Object.keys(req.body);

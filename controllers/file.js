@@ -16,7 +16,7 @@ module.exports.deleteFile = factory.deleteOne(File);
 
 // same as getEmployees 
 module.exports.getCollaborators = async (req, res) => {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     var aggregation = aggregationWithFacet(req, res);
     logger.info("req.userid", userId);
     var query = [
@@ -62,7 +62,7 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
     const updates = Object.keys(req.body);
 
     // const { id } = req?.params;
-    const userId = req?.user?.userId;
+    const userId = req?.user?.id;
     try {
         const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
         // const object = objects[0];
@@ -94,7 +94,7 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 
 // Working ✅
 module.exports.getEmployeeFileDetails = async (req, res) => {
-    const userId = req.user?.userId
+    const userId = req.user?.id
 
     var query = matchQuery(userId);
 
@@ -225,7 +225,7 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
 // Working ✅
 module.exports.deleteEmployeeFileDetails = async (req, res) => {
     // const { id } = req?.params;
-    const userId = req?.user?.userId;
+    const userId = req?.user?.id;
 
     try {
         // const object = await File.aggregate(aggregation).deleteOne();
@@ -248,7 +248,7 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
 
 
 module.exports.getAllFilesWithQuries = async (req, res) => {
-    const { userId } = req.user
+    const userId = req.user.id
     try {
         var aggregation = aggregationWithFacet(req, res);
 

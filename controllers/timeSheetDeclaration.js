@@ -14,7 +14,7 @@ module.exports.deleteTimeSheetDeclaration = factory.deleteOne(TimeSheetDeclarati
 
 module.exports.createDeclarationAsEmployee = async (req, res) => {
     logger.info("createDeclarationAsEmployee");
-    const userId = req.user?.userId
+    const userId = req.user?.id
     const declararation = new TimeSheetDeclaration();
     // const userFile = await File.findOne({  });
     declararation.userId = mongoose.Types.ObjectId(userId);
@@ -39,7 +39,7 @@ module.exports.createDeclarationAsEmployee = async (req, res) => {
 }
 
 module.exports.getEmployeeDeclarations = async (req, res) => {
-    const userId = req.user?.userId
+    const userId = req.user?.id
 
 
     // const userFile = await File.findOne({ userId: user.userId });
@@ -105,7 +105,7 @@ module.exports.getEmployeeDeclarations = async (req, res) => {
 }
 
 module.exports.updateDeclarationStatus = async (req, res) => {
-    const { userId } = req?.user
+    const userId = req.user.id
     const { declarationId } = req.params;
     const validationErrors = []
     const updates = Object.keys(req.body);

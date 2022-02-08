@@ -14,7 +14,7 @@ module.exports.employeeTimeoffHistory = factory.getEmployeeThing(TimeOff)
 
 module.exports.updateEmployeeTimeoff = async (req, res) => {
     const timeOffId = req.params.id;
-    const userId = req.user?.userId
+    const userId = req.user?.id
     const validationErrors = []
     const updates = Object.keys(req.body);
     const allowedFields = ["startDate", "offDays"]
@@ -30,7 +30,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
     try {
         logger.info("starting updateEmployeeTimeoff");
-        // const userFile = await File.findOne({ userId: req.user?.userId });
+        // const userFile = await File.findOne({ userId: req.user?.id });
 
         const timeOff = await TimeOff.findOne({ userId: mongoose.Types.ObjectId(userId), _id: timeOffId });
         if (!timeOff) return res.sendStatus(404);
@@ -58,7 +58,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
 module.exports.createTimeOffAsEmployee = async (req, res) => {
     const validationErrors = []
-    const { userId } = req.user;
+    const userId = req.user.id;
     logger.info("createTimeOffAsEmployee");
     const inputFields = Object.keys(req.body);
 
@@ -77,7 +77,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
         timeOffRequest[input] = req.body[input];
     });
 
-    // const userFile = await File.findOne({ userId: req.user?.userId });
+    // const userFile = await File.findOne({ userId: req.user?.id });
     timeOffRequest.userId = mongoose.Types.ObjectId(userId);
     logger.info('created timoff! : ', timeOffRequest)
 
