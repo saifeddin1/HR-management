@@ -19,6 +19,8 @@ const profileSchema = Schema(
             type: String,
             enum: ["Junior", "Senior", "Consultant"]
         },
+        phone: Number,
+        address: String,
         position: String,
         departement: String,
         proEmail: { type: String, required: false },
