@@ -10,7 +10,7 @@ const salarySchema = Schema(
             ref: 'Contract'
         },
         seniorityDate: String,
-        annualCompensation: [{ annual: Number, effective: Number, gross: Number, bonus: Number }],
+        annualCompensation: { annual: Number, effective: Number, gross: Number, bonus: Number },
         enabled: {
             type: Boolean,
             default: true,

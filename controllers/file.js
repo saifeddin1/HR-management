@@ -60,25 +60,20 @@ module.exports.getCollaborators = async (req, res) => {
 //   Working ✅
 module.exports.updateEmployeeFileDetails = async (req, res) => {
     const updates = Object.keys(req.body);
-
-    // const { id } = req?.params;
     const userId = req?.user?.id;
+    var query = {};
     try {
-        const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
-        // const object = objects[0];
+
+        for (var key in req.body) {
+            if (req.body[key] && req.body[key].length) {
+                query["profile." + key] = req.body[key];
+            }
+        }
+        console.log("\n\n req body : ", req.body, "\n\n")
+        const object = await File.updateOne({ userId: mongoose.Types.ObjectId(userId) }, { $set: query });
         logger.info('found object! : ', object)
         if (!object) return res.sendStatus(404);
-        updates.forEach(update => {
-            logger.info('key : ', update)
-            object[update] = req.body[update];
-        });
-
-        logger.info('updated object! : ', object)
-
-        await object.save();
-
         logger.info('saved object! : ', object)
-
         return res.json(
             {
                 response: object,
