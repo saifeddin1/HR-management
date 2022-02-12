@@ -1,11 +1,14 @@
 const { logger } = require('../config/logger')
 const mongoose = require('mongoose')
+const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
+
 
 const getAll = (Model) =>
-
+    // TO DO : pagination 
     async (req, res) => {
         try {
-            const objects = await Model.find({})
+            var aggregation = aggregationWithFacet(req, res);
+            const objects = await Model.aggregate(aggregation)
             res.status(200).json({
                 response: objects,
                 message: objects?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
@@ -53,7 +56,7 @@ const createOne = (Model) =>
 
         try {
             await object.save();
-            console.log("Saved ");
+            logger.info("Saved ");
             res.status(201).json(
                 {
                     response: object,
@@ -120,12 +123,12 @@ const deleteOne = (Model) =>
 
 const getEmployeeThing = (Model) =>
     async (req, res) => {
-        const { userId } = req?.user;
+        const userId = req.user.id;
         try {
-            console.log("ddddddddddddddd");
+            logger.info("Entered Get Employee" + Model.modelName);
 
             const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
-            console.log(`employeeWith${Model.modelName}`, employeeWith);
+            logger.info(`employeeWith${Model.modelName}`, employeeWith);
             !employeeWith ?
                 req.t("ERROR.NOT_FOUND")
                 : res.status(200).json({

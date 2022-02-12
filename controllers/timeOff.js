@@ -2,6 +2,7 @@ const { TimeOff } = require('../models/TimeOff');
 const File = require('../models/File');
 const factory = require('./factory');
 const mongoose = require('mongoose');
+const { logger } = require('../config/logger');
 
 module.exports.getAllTimeOffs = factory.getAll(TimeOff);
 module.exports.getOneTimeOff = factory.getOne(TimeOff);
@@ -13,7 +14,7 @@ module.exports.employeeTimeoffHistory = factory.getEmployeeThing(TimeOff)
 
 module.exports.updateEmployeeTimeoff = async (req, res) => {
     const timeOffId = req.params.id;
-    const userId = req.user?.userId
+    const userId = req.user?.id
     const validationErrors = []
     const updates = Object.keys(req.body);
     const allowedFields = ["startDate", "offDays"]
@@ -28,8 +29,8 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
 
     try {
-        console.log("starting updateEmployeeTimeoff");
-        // const userFile = await File.findOne({ userId: req.user?.userId });
+        logger.info("starting updateEmployeeTimeoff");
+        // const userFile = await File.findOne({ userId: req.user?.id });
 
         const timeOff = await TimeOff.findOne({ userId: mongoose.Types.ObjectId(userId), _id: timeOffId });
         if (!timeOff) return res.sendStatus(404);
@@ -38,7 +39,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
             timeOff[update] = req.body[update];
         });
         await timeOff.save();
-        console.log("saved obj");
+        logger.info("saved obj");
         return !timeOff
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
@@ -48,7 +49,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
                 }
             );
     } catch (e) {
-        console.log(`Error in updateEmployeeTimeoff() function: `, e.message)
+        logger.info(`Error in updateEmployeeTimeoff() function: `, e.message)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
@@ -57,8 +58,8 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
 module.exports.createTimeOffAsEmployee = async (req, res) => {
     const validationErrors = []
-    const { userId } = req.user;
-    console.log("createTimeOffAsEmployee");
+    const userId = req.user.id;
+    logger.info("createTimeOffAsEmployee");
     const inputFields = Object.keys(req.body);
 
     const allowedFields = ["startDate", "offDays"]
@@ -76,13 +77,13 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
         timeOffRequest[input] = req.body[input];
     });
 
-    // const userFile = await File.findOne({ userId: req.user?.userId });
+    // const userFile = await File.findOne({ userId: req.user?.id });
     timeOffRequest.userId = mongoose.Types.ObjectId(userId);
-    console.log('created timoff! : ', timeOffRequest)
+    logger.info('created timoff! : ', timeOffRequest)
 
     try {
         await timeOffRequest.save();
-        console.log("Saved ");
+        logger.info("Saved ");
         res.status(201).json(
             {
                 response: timeOffRequest,
@@ -91,7 +92,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
         )
 
     } catch (e) {
-        console.log(`Error in createOne() function: ${e.message}`)
+        logger.info(`Error in createOne() function: ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
 
@@ -120,9 +121,9 @@ module.exports.updateStatus = async (req, res) => {
         updates.forEach(update => {
             object[update] = req.body[update];
         });
-        console.log("updated");
+        logger.info("updated");
         await object.save();
-        console.log("saved");
+        logger.info("saved");
 
         return !object
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
@@ -133,7 +134,7 @@ module.exports.updateStatus = async (req, res) => {
                 }
             );
     } catch (e) {
-        console.log(`Error in updateTimeOffStatus() function: ${e.message}`)
+        logger.info(`Error in updateTimeOffStatus() function: ${e.message}`)
 
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }

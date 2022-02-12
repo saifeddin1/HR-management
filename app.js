@@ -8,7 +8,7 @@ const i18next = require("./utils/i18n.js");
 const middleware = require("i18next-http-middleware");
 const logger = require('./config/logger').logger
 const { auth } = require('./config/auth')
-
+const cors = require('cors')
 dotenv.config({ path: '.env' });
 const app = express();
 
@@ -23,6 +23,7 @@ app.use((req, res, next) => {
   res.locals.user = req.user;
   next();
 });
+app.use(cors());
 app.use(auth);
 app.use(routes);
 

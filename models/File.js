@@ -11,7 +11,7 @@ const fileSchema = Schema(
             type: mongoose.Schema.Types.ObjectId
         },
         timeOffBalance: Number,
-        prouserId: {
+        profile: {
             type: profileSchema,
         },
         enabled: {
