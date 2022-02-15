@@ -5,6 +5,7 @@ const logger = require('../config/logger').logger;
 const mongoose = require('mongoose')
 const { matchQuery } = require('../utils/matchQuery');
 const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
+const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 
 module.exports.getAllFiles = factory.getAll(File);
@@ -16,7 +17,10 @@ module.exports.deleteFile = factory.deleteOne(File);
 
 // same as getEmployees 
 module.exports.getCollaborators = async (req, res) => {
-    const userId = req.user?.id;
+    // const userId = req.user?.id;
+    const userId = getCurrentUserId(req, res);
+    console.log("⚡ ~ file: file.js ~ line 22 ~ module.exports.getCollaborators= ~ userId", userId)
+
     var aggregation = aggregationWithFacet(req, res);
     logger.info("req.userid", userId);
     var query = [
@@ -60,7 +64,9 @@ module.exports.getCollaborators = async (req, res) => {
 //   Working ✅
 module.exports.updateEmployeeFileDetails = async (req, res) => {
     const updates = Object.keys(req.body);
-    const userId = req?.user?.id;
+    // const userId = req?.user?.id;
+    const userId = getCurrentUserId(req, res);
+
     var query = {};
     try {
 
@@ -89,7 +95,9 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 
 // Working ✅
 module.exports.getEmployeeFileDetails = async (req, res) => {
-    const userId = req.user?.id
+    // const userId = req.user?.id
+    const userId = getCurrentUserId(req, res);
+
 
     var query = matchQuery(userId);
 
@@ -219,8 +227,8 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
 
 // Working ✅
 module.exports.deleteEmployeeFileDetails = async (req, res) => {
-    // const { id } = req?.params;
-    const userId = req?.user?.id;
+    // const userId = req?.user?.id;
+    const userId = getCurrentUserId(req, res);
 
     try {
         // const object = await File.aggregate(aggregation).deleteOne();
@@ -243,7 +251,9 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
 
 
 module.exports.getAllFilesWithQuries = async (req, res) => {
-    const userId = req.user.id
+    // const userId = req.user.id
+    const userId = getCurrentUserId(req, res);
+
     try {
         var aggregation = aggregationWithFacet(req, res);
 

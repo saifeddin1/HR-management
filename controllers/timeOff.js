@@ -14,7 +14,9 @@ module.exports.employeeTimeoffHistory = factory.getEmployeeThing(TimeOff)
 
 module.exports.updateEmployeeTimeoff = async (req, res) => {
     const timeOffId = req.params.id;
-    const userId = req.user?.id
+    // const userId = req.user?.id
+    const userId = getCurrentUserId(req, res);
+
     const validationErrors = []
     const updates = Object.keys(req.body);
     const allowedFields = ["startDate", "offDays"]
@@ -58,7 +60,9 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
 module.exports.createTimeOffAsEmployee = async (req, res) => {
     const validationErrors = []
-    const userId = req.user.id;
+    // const userId = req.user.id;
+    const userId = getCurrentUserId(req, res);
+
     logger.info("createTimeOffAsEmployee");
     const inputFields = Object.keys(req.body);
 

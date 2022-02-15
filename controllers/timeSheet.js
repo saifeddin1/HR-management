@@ -13,8 +13,8 @@ module.exports.deleteTimeSheet = factory.deleteOne(TimeSheet);
 module.exports.getEmployeeTimeSheets = factory.getEmployeeThing(TimeSheet);
 
 module.exports.updateTimeSheetForEmployee = async (req, res) => {
-    // req.body : workinghours, note, date 
-    const userId = req.user.id;
+    // const userId = req.user.id;
+    const userId = getCurrentUserId(req, res);
     const { timeSheetId } = req.params
     const validationErrors = []
     const updates = Object.keys(req.body);

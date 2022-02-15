@@ -1,6 +1,7 @@
 const { logger } = require('../config/logger')
 const mongoose = require('mongoose')
 const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
+const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 
 const getAll = (Model) =>
@@ -123,7 +124,9 @@ const deleteOne = (Model) =>
 
 const getEmployeeThing = (Model) =>
     async (req, res) => {
-        const userId = req.user.id;
+        // const userId = req.user.id;
+        const userId = getCurrentUserId(req, res);
+
         try {
             logger.info("Entered Get Employee" + Model.modelName);
 

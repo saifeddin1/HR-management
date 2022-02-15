@@ -2,6 +2,7 @@ const { Contract } = require('../models/Contract');
 const factory = require('./factory');
 const logger = require('../config/logger').logger;
 const { matchQuery } = require('../utils/matchQuery');
+const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 module.exports.getAllContracts = factory.getAll(Contract);
 module.exports.getOneContract = factory.getOne(Contract);
@@ -13,8 +14,9 @@ module.exports.getEmployeeContracts = factory.getEmployeeThing(Contract);
 
 
 module.exports.getEmployeeContractsWithSalary = async (req, res) => {
-    const userId = req.user?.id
-
+    // const userId = req.user?.id
+    const userId = getCurrentUserId(req, res);
+    logger.debug("⚡~ file: contract.js ~ line 19 ~ userId", userId)
     var query = matchQuery(userId);
 
     var aggregation = [
