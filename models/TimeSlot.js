@@ -5,12 +5,9 @@ const { Schema } = mongoose;
 
 const timeSlotSchema = Schema(
     {
-        startDate: Date,
-        endDate: Date,
-        // timeSheet: {
-        //     type: mongoose.Schema.Types.ObjectId,
-        //     ref: 'TimeSheet'
-        // },
+        start: Date,
+        end: Date,
+        description: String,
         enabled: {
             type: Boolean,
             default: true,

@@ -5,6 +5,7 @@ const logger = require('../config/logger').logger;
 const mongoose = require('mongoose')
 const { matchQuery } = require('../utils/matchQuery');
 const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
+const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 
 module.exports.getAllFiles = factory.getAll(File);
@@ -16,9 +17,12 @@ module.exports.deleteFile = factory.deleteOne(File);
 
 // same as getEmployees 
 module.exports.getCollaborators = async (req, res) => {
-    const userId = req.user?.userId;
+    // const userId = req.user?.id;
+    const userId = getCurrentUserId(req, res);
+    console.log("⚡ ~ file: file.js ~ line 22 ~ module.exports.getCollaborators= ~ userId", userId)
+
     var aggregation = aggregationWithFacet(req, res);
-    console.log("req.userid", userId);
+    logger.info("req.userid", userId);
     var query = [
 
         { userRef: { '$ne': userId } }
@@ -60,25 +64,22 @@ module.exports.getCollaborators = async (req, res) => {
 //   Working ✅
 module.exports.updateEmployeeFileDetails = async (req, res) => {
     const updates = Object.keys(req.body);
+    // const userId = req?.user?.id;
+    const userId = getCurrentUserId(req, res);
 
-    // const { id } = req?.params;
-    const userId = req?.user?.userId;
+    var query = {};
     try {
-        const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
-        // const object = objects[0];
-        console.log('found object! : ', object)
+
+        for (var key in req.body) {
+            if (req.body[key] && req.body[key].length) {
+                query["profile." + key] = req.body[key];
+            }
+        }
+        console.log("\n\n req body : ", req.body, "\n\n")
+        const object = await File.updateOne({ userId: mongoose.Types.ObjectId(userId) }, { $set: query });
+        logger.info('found object! : ', object)
         if (!object) return res.sendStatus(404);
-        updates.forEach(update => {
-            console.log('key : ', update)
-            object[update] = req.body[update];
-        });
-
-        console.log('updated object! : ', object)
-
-        await object.save();
-
-        console.log('saved object! : ', object)
-
+        logger.info('saved object! : ', object)
         return res.json(
             {
                 response: object,
@@ -94,7 +95,9 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 
 // Working ✅
 module.exports.getEmployeeFileDetails = async (req, res) => {
-    const userId = req.user?.userId
+    // const userId = req.user?.id
+    const userId = getCurrentUserId(req, res);
+
 
     var query = matchQuery(userId);
 
@@ -224,13 +227,13 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
 
 // Working ✅
 module.exports.deleteEmployeeFileDetails = async (req, res) => {
-    // const { id } = req?.params;
-    const userId = req?.user?.userId;
+    // const userId = req?.user?.id;
+    const userId = getCurrentUserId(req, res);
 
     try {
         // const object = await File.aggregate(aggregation).deleteOne();
         const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
-        console.log(object);
+        logger.info(object);
         object.enabled ? object.enabled = false : res.status(403).json({ message: req.t("ERROR.FORBIDDEN") });
         object.save();
         return !object ? res.send(404) : res.json(
@@ -248,7 +251,9 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
 
 
 module.exports.getAllFilesWithQuries = async (req, res) => {
-    const { userId } = req.user
+    // const userId = req.user.id
+    const userId = getCurrentUserId(req, res);
+
     try {
         var aggregation = aggregationWithFacet(req, res);
 

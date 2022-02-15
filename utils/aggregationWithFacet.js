@@ -16,7 +16,7 @@ module.exports.aggregationWithFacet = (req, res) => {
         sort[req.query.sortBy] = req.query.orderBy === 'desc' ? -1 : 1
     }
 
-    console.log(sort.length);
+    logger.info(sort.length);
     logger.info("Method : getAllFilesWithQuries, message : building aggregation ...");
     var aggregation = [
         {
