@@ -1,6 +1,7 @@
 const { logger } = require('../config/logger')
 const mongoose = require('mongoose')
 const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
+const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 
 const getAll = (Model) =>
@@ -123,11 +124,21 @@ const deleteOne = (Model) =>
 
 const getEmployeeThing = (Model) =>
     async (req, res) => {
-        const userId = req.user.id;
+        // const userId = req.user.id;
+        const userId = getCurrentUserId(req, res);
+        var aggregation = aggregationWithFacet(req, res);
+
         try {
+            aggregation.unshift({
+                $match: {
+                    userId: mongoose.Types.ObjectId(userId),
+                    enabled: true
+                }
+            })
             logger.info("Entered Get Employee" + Model.modelName);
 
-            const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
+            // const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
+            const employeeWith = await Model.aggregate(aggregation);
             logger.info(`employeeWith${Model.modelName}`, employeeWith);
             !employeeWith ?
                 req.t("ERROR.NOT_FOUND")
