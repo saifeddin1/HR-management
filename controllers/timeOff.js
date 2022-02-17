@@ -3,6 +3,7 @@ const File = require('../models/File');
 const factory = require('./factory');
 const mongoose = require('mongoose');
 const { logger } = require('../config/logger');
+const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 module.exports.getAllTimeOffs = factory.getAll(TimeOff);
 module.exports.getOneTimeOff = factory.getOne(TimeOff);
@@ -78,14 +79,18 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
 
     const timeOffRequest = new TimeOff();
     inputFields.forEach(input => {
+        if (new Date(req.body['startDate']) < new Date() || (req.body['offDays'] < 1 || req.body['offDays'] > 22)) return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
         timeOffRequest[input] = req.body[input];
     });
 
-    // const userFile = await File.findOne({ userId: req.user?.id });
     timeOffRequest.userId = mongoose.Types.ObjectId(userId);
     logger.info('created timoff! : ', timeOffRequest)
 
     try {
+
+        const userFile = await File.updateOne({ userId: userId }, { $inc: { timeOffBalance: -req.body['offDays'] } });
+
+        console.log("⚡  userFile after substraction: ", userFile)
         await timeOffRequest.save();
         logger.info("Saved ");
         res.status(201).json(

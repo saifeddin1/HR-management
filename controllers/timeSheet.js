@@ -3,7 +3,8 @@ const { TimeSheetDeclaration } = require('../models/TimeSheetDeclaration');
 const factory = require('./factory');
 const { logger } = require('../config/logger')
 const mongoose = require('mongoose');
-const YearMonthCondition = require('../utils/YearMonthCondition')
+const YearMonthCondition = require('../utils/YearMonthCondition');
+const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 module.exports.getAllTimeSheets = factory.getAll(TimeSheet);
 module.exports.getOneTimeSheet = factory.getOne(TimeSheet);
@@ -18,31 +19,15 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
     const { timeSheetId } = req.params
     const validationErrors = []
     const updates = Object.keys(req.body);
-
-    // function formatDate(date) {
-
-    //     // var d = DateTimezoneDifference(date), month = '' + (d.getMonth() + 1), year = d.getFullYear();
-    //     var d = date, month = '' + (date.getMonth() + 1), year = date.getFullYear();
-    //     if (month.length < 2)
-    //         month = '0' + month;
-    //     return [year, month].join('-');
-
-    // }
-
-    // const formatDate = (date) => {
-    //     return Date(date).toISOString().split("T")[0].substr(0, 7);
-    // }
-
-
-    // const allowed = ["status"];  
     const allowed = ["workingHours", "note", "date"];
     const isValidOperation = updates.every(update => {
         const isValid = allowed.includes(update);
         if (!isValid) validationErrors.push(update);
         return isValid;
     });
-    // var yearMonth = req.body?.date.toISOString().split("T")[0].substr(0, 7);
-    var yearMonth = "2022-02"
+    var yearMonth = req.body?.date?.split("T")[0].substr(0, 7);
+    // var yearMonth = "2022-01"
+    console.log("\n\n🚀  module.exports.updateTimeSheetForEmployee= ~ yearMonth", yearMonth)
 
 
     if (!isValidOperation)
@@ -97,7 +82,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
             // case empty array , we can modify or create timesheet
             logger.info("Im here, array empty");
 
-            await TimeSheet.findByIdAndUpdate(timeSheetId, { note: req.body.note, workingHours: req.body.workingHours })
+            await TimeSheet.findByIdAndUpdate(timeSheetId, { note: req.body.note, workingHours: req.body.workingHours, date: req.body.date })
             return res.status(200).json({
                 message: req.t("SUCCESS.EDITED"),
             })
@@ -112,3 +97,32 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
     }
 }
 
+
+module.exports.getCurrentTimesheet = async (req, res) => {
+    const userId = getCurrentUserId(req, res);
+    let date = req.params?.date
+    console.log("⚡ ~ file: timeSheet.js ~ line 104 ~ module.exports.getCurrentTimesheet= ~ date", date)
+
+    try {
+        const currentTimeSheet = await TimeSheet.findOne({ userId: userId, date: date });
+        logger.info("currentTimeSheet", currentTimeSheet);
+        if (!currentTimeSheet) {
+            logger.info(`Not found with given date`)
+            return res.status(404).json({
+                message: req.t("ERROR.NOT_FOUND")
+            })
+        }
+        return res.status(200).json({
+            response: currentTimeSheet,
+            message: req.t("SUCCESS.RETRIEVED"),
+        })
+    }
+    catch (e) {
+        logger.info(`Error in getCurrentTimesheet() function: ${e.message}`)
+        return res.status(400).json({
+            message: req.t("ERROR.UNAUTHORIZED")
+        })
+    }
+
+
+}
