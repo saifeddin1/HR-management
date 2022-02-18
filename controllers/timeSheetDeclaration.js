@@ -4,6 +4,7 @@ const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { logger } = require('../config/logger');
 const mongoose = require('mongoose');
 const File = require('../models/File')
+const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 module.exports.getAllTimeSheetDeclarations = factory.getAll(TimeSheetDeclaration);
 module.exports.getOneTimeSheetDeclaration = factory.getOne(TimeSheetDeclaration);
@@ -41,12 +42,8 @@ module.exports.createDeclarationAsEmployee = async (req, res) => {
 }
 
 module.exports.getEmployeeDeclarations = async (req, res) => {
-    // const userId = req.user?.id
     const userId = getCurrentUserId(req, res);
 
-
-
-    // const userFile = await File.findOne({ userId: user.userId });
     var aggregation = aggregationWithFacet(req, res);
 
     aggregation.unshift(
@@ -148,4 +145,27 @@ module.exports.updateDeclarationStatus = async (req, res) => {
             message: req.t("ERROR.UNAUTHORIZED")
         });
     }
+}
+
+module.exports.getCurrentDeclaration = async (req, res) => {
+    const { month } = req.params;
+    const userId = getCurrentUserId(req, res)
+    try {
+
+        const currentDeclaration = await TimeSheetDeclaration.findOne({ userId: userId, month: month, enabled: true });
+        return !currentDeclaration
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
+            : res.status(200).json(
+                {
+                    response: currentDeclaration,
+                    message: req.t("SUCCESS.RETRIEVED")
+                }
+            );
+    } catch (e) {
+        return res.status(400).json({
+            message: req.t("ERROR.UNAUTHORIZED")
+        });
+    }
+
+
 }

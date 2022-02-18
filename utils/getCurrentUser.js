@@ -1,3 +1,3 @@
 module.exports.getCurrentUserId = (req, res) => {
-    return req.user._id
+    return req.user.user?._id
 }
