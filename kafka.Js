@@ -2,6 +2,7 @@
 const { Kafka } = require('kafkajs');
 const File = require('./models/File');
 var ObjectId = require('mongodb').ObjectId;
+const logger = require('./config/logger').logger
 
 
 const kafka = new Kafka({
@@ -23,19 +24,19 @@ const run = async (req ,res) => {
        
         
         const obj = JSON.parse(message.value);
-        console.log(obj)
+        logger.info(obj)
         try{
             
               const response= await File.updateOne( {"userId": ObjectId(obj._id)}, {$set:obj}, {upsert: true})
-              console.log("hi")
+              logger.info(response)
               if(response){
-                  console.log("no bromblem jawak feez fez")
+                  logger.info("Executing wihout problems")
               }
               else{
-                  console.log('barsha bromblem ye kebdi')
+                  logger.info('Something went wrong')
               }
                 }catch(e){
-                    console.log("catch : "+e)
+                    logger.info("catch : "+e)
                 }
           //  }
        

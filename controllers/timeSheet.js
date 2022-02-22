@@ -27,7 +27,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
     });
     var yearMonth = req.body?.date?.split("T")[0].substr(0, 7);
     // var yearMonth = "2022-01"
-    console.log("\n\n🚀  module.exports.updateTimeSheetForEmployee= ~ yearMonth", yearMonth)
+    logger.info("\n\n🚀  module.exports.updateTimeSheetForEmployee= ~ yearMonth", yearMonth)
 
 
     if (!isValidOperation)
@@ -101,7 +101,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
 module.exports.getCurrentTimesheet = async (req, res) => {
     const userId = getCurrentUserId(req, res);
     let date = req.params?.date
-    console.log("⚡ ~ file: timeSheet.js ~ line 104 ~ module.exports.getCurrentTimesheet= ~ date", date)
+    logger.info("⚡ ~ file: timeSheet.js ~ line 104 ~ module.exports.getCurrentTimesheet= ~ date", date)
 
     try {
         const currentTimeSheet = await TimeSheet.findOne({ userId: userId, date: date });
