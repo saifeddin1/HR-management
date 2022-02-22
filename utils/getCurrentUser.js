@@ -1,3 +1,6 @@
+const logger = require('../config/logger').logger
+
 module.exports.getCurrentUserId = (req, res) => {
-    return req.user.user?._id
+    logger.info('😁😁😁😁', req.user)
+    return req.user._id
 }

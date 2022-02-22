@@ -90,7 +90,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
 
         const userFile = await File.updateOne({ userId: userId }, { $inc: { timeOffBalance: -req.body['offDays'] } });
 
-        console.log("⚡  userFile after substraction: ", userFile)
+        logger.info("⚡  userFile after substraction: ", userFile)
         await timeOffRequest.save();
         logger.info("Saved ");
         res.status(201).json(

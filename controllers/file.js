@@ -19,7 +19,7 @@ module.exports.deleteFile = factory.deleteOne(File);
 module.exports.getCollaborators = async (req, res) => {
     // const userId = req.user?.id;
     const userId = getCurrentUserId(req, res);
-    console.log("⚡ ~ file: file.js ~ line 22 ~ module.exports.getCollaborators= ~ userId", userId)
+    logger.info("⚡ ~ file: file.js ~ line 22 ~ module.exports.getCollaborators= ~ userId", userId)
 
     var aggregation = aggregationWithFacet(req, res);
     logger.info("req.userid", userId);
@@ -75,7 +75,7 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
                 query["profile." + key] = req.body[key];
             }
         }
-        console.log("\n\n req body : ", req.body, "\n\n")
+        logger.info("\n\n req body : ", req.body, "\n\n")
         const object = await File.updateOne({ userId: mongoose.Types.ObjectId(userId) }, { $set: query });
         logger.info('found object! : ', object)
         if (!object) return res.sendStatus(404);
