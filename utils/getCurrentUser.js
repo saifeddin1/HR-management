@@ -1,3 +1,4 @@
 module.exports.getCurrentUserId = (req, res) => {
-    return req.user.user?._id
+    console.log('😁😁😁😁', req.user)
+    return req.user._id
 }
