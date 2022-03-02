@@ -8,6 +8,7 @@
     "NOT_SAVED":"خطأ في عملية التسجيل",
     "FORBIDDEN": "ممنوع",
     "UNAUTHORIZED": "غير مصرح",
+    "BAD_REQUEST": "خطأ في العملية",
     "INVALID_INFORMATION": "الرجاء ادخال معلومات صحيحه",
     "DEACTIVATED":"حسابك معطل في الوقت الحالي ، يرجى الاتصال بالإدارة",
     "ALREADY_EXISTS": "موجود بالفعل"         
