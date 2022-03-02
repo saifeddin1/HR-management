@@ -9,15 +9,21 @@ const getAll = (Model) =>
     async (req, res) => {
         try {
             var aggregation = aggregationWithFacet(req, res);
+            aggregation.unshift({
+                $match: {
+                    enabled: true
+                }
+            })
             const objects = await Model.aggregate(aggregation)
+            if (!objects || !objects.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             res.status(200).json({
                 response: objects,
-                message: objects?.length > 0 ? req.t("SUCCESS.RETRIEVED") : req.t("ERROR.NOT_FOUND")
+                message: req.t("SUCCESS.RETRIEVED")
             })
         } catch (e) {
             logger.error(`Error in getAll() function`)
             return res.status(400).json({
-                message: req.t("ERROR.UNAUTHORIZED")
+                message: req.t("ERROR.BAD_REQUEST")
             });
         }
 
@@ -41,7 +47,7 @@ const getOne = (Model) =>
         } catch (e) {
             logger.error(`Error in getOne() function`)
             return res.status(400).json({
-                message: req.t("ERROR.UNAUTHORIZED")
+                message: req.t("ERROR.BAD_REQUEST")
             })
         }
 
@@ -66,9 +72,9 @@ const createOne = (Model) =>
             )
 
         } catch (e) {
-            logger.error(`Error in createOne() function`)
+            logger.error(`Error in createOne() function: ${e.message}`)
             return res.status(400).json({
-                message: req.t("ERROR.UNAUTHORIZED")
+                message: req.t("ERROR.BAD_REQUEST")
             })
         }
 
@@ -116,7 +122,7 @@ const deleteOne = (Model) =>
         } catch (e) {
             logger.error(`Error in deleteOne() function`)
             return res.status(400).json({
-                message: req.t("ERROR.UNAUTHORIZED")
+                message: req.t("ERROR.BAD_REQUEST")
             });
         }
 
@@ -149,7 +155,7 @@ const getEmployeeThing = (Model) =>
         } catch (e) {
             logger.debug(JSON.stringify(e))
             return res.status(400).json({
-                message: req.t("ERROR.UNAUTHORIZED")
+                message: req.t("ERROR.BAD_REQUEST")
 
             });
         }
