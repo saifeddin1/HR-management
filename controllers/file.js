@@ -63,19 +63,20 @@ module.exports.getCollaborators = async (req, res) => {
 // Manage employees files for admin 
 //   Working ✅
 module.exports.updateEmployeeFileDetails = async (req, res) => {
-    const updates = Object.keys(req.body);
-    // const userId = req?.user?.id;
+    const allowed_updates = ['phone', 'address', 'proEmail']
     const userId = getCurrentUserId(req, res);
 
-    var query = {};
+    logger.info("\n\n req body : ", req.body, "\n\n")
+    var query = { userRef: req.body.userRef };
     try {
 
-        for (var key in req.body) {
-            if (req.body[key] && req.body[key].length) {
-                query["profile." + key] = req.body[key];
+        // for nested profile fileds
+        for (var key of allowed_updates) {
+            if (req.body['profile'][key] && req.body['profile'][key].length) {
+                query["profile." + key] = req.body['profile'][key];
             }
         }
-        logger.info("\n\n req body : ", req.body, "\n\n")
+        logger.info("\n\n\n Query:", query)
         const object = await File.updateOne({ userId: mongoose.Types.ObjectId(userId) }, { $set: query });
         logger.info('found object! : ', object)
         if (!object) return res.sendStatus(404);
@@ -91,6 +92,38 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
         logger.error(`Error in updateEmployeeFileDetails() function: ${e.message}`)
         return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
     }
+}
+
+module.exports.updateEmployeeFileAsAdmin = async (req, res) => {
+    const file_id = req.params.file_id;
+    const { _id, createdAt, updatedAt, ...profile_fields } = req.body.profile
+    var query = { userRef: req.body.userRef, timeOffBalance: req.body.timeOffBalance };
+    console.log("\n\n\n req body:", req.body)
+    try {
+
+        // for nested profile fileds
+        for (var key in profile_fields) {
+            if (req.body['profile'][key] && req.body['profile'][key].length) {
+                query["profile." + key] = req.body['profile'][key];
+            }
+        }
+        console.log("\n\n\n Query:", query)
+        const file = await File.updateOne({ _id: mongoose.Types.ObjectId(file_id) }, { $set: query });
+        logger.info('found file! : ', file)
+        if (!file) return res.sendStatus(404);
+        logger.info('saved file! : ', file)
+        return res.json(
+            {
+                response: file,
+                message: req.t("SUCCESS.EDITED")
+            }
+        );
+
+    } catch (e) {
+        logger.error(`Error in updateEmployeeFileAsAdmin() function: ${e.message}`)
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
+    }
+
 }
 
 // Working ✅
@@ -220,7 +253,7 @@ module.exports.getEmployeeFileDetails = async (req, res) => {
             );
     } catch (e) {
         logger.error(`Error in getEmployeeFileDetails() function: `, e.message)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") })
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") })
     }
 
 }
@@ -244,7 +277,7 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
         );
     } catch (e) {
         logger.error(`Error in deleteEmployeeFileDetails() function: ${e.message}`)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
     }
 
 }
@@ -306,9 +339,27 @@ module.exports.getAllFilesWithQuries = async (req, res) => {
         })
     } catch (e) {
         logger.error(`Error in getAllWithQueries() function: ${e.message}`)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
     }
 }
 
+module.exports.getOneByUserId = async (req, res) => {
+    const paramUserId = req.params?.userId;
 
+    try {
+        const oneFile = await File.findOne({ userId: paramUserId })
+        return !oneFile
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
+            : res.status(200).json(
+                {
+                    response: oneFile,
+                    message: req.t("SUCCESS.RETRIEVED")
 
+                }
+            );
+    } catch (e) {
+        logger.error(`Error in getEmployeeFileDetails() function: `, e.message)
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") })
+    }
+
+}

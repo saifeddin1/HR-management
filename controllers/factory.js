@@ -58,6 +58,7 @@ const createOne = (Model) =>
 
         logger.info("Create One");
         logger.info("Model :", Model.modelName);
+        console.log("\n**** ", req.body, " *********\n");
         const object = new Model(req.body);
         logger.info("Object :", object);
 
