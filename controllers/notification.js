@@ -31,3 +31,30 @@ module.exports.createNewNotification = async (req, res) => {
         })
     }
 }
+
+module.exports.getUnreadNotificationsCount = async (req, res) => {
+    const userId = getCurrentUserId(req, res);
+    query = {
+        userId: userId,
+        enabled: true,
+        isRead: false
+    }
+    try {
+        const unreadNotifs = await Notification.find(query);
+        console.log('\n******', unreadNotifs)
+        if (!unreadNotifs) return res.status(404).json({
+            message: req.t("ERROR.NOT_FOUND")
+        })
+
+
+        return res.status(200).json({
+            response: unreadNotifs.length,
+            message: req.t("SUCCESS.RETRIEVED")
+        })
+    } catch (error) {
+        logger.error(`Error in getUnreadNotifs() function: ${error.message}`)
+        return res.status(400).json({
+            message: req.t("ERROR.BAD_REQUEST")
+        })
+    }
+}

@@ -12,9 +12,9 @@ const interviewSchema = Schema(
         title: String,
         files: String,
         test: [{
-            url: String, // coding game for exemple
-            title: String, // test angualr node js
-            description: String, // ce test est ......
+            url: String,
+            title: String,
+            description: String,
         }],
         enabled: {
             type: Boolean,

@@ -8,9 +8,10 @@ const notificationController = require('../../controllers/notification')
 // router.put('/employeeNotificationDetails', notificationController.updateEmployeeNotificationDetails);
 // router.delete('/employeeNotificationDetails', notificationController.deleteEmployeeNotificationDetails);
 
-//  Default factory CRUD endpoints
+//  Default factory CRUD endpoints getUnreadNotificationsCount
 
 router.get('/getUserNotifications', notificationController.getUserNotifications);
+router.get('/getUnreadNotificationsCount', notificationController.getUnreadNotificationsCount);
 router.get('/', notificationController.getAllNotifications);
 router.post('/', notificationController.createNewNotification);
 router.get('/:id', notificationController.getOneNotification);

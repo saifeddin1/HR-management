@@ -11,6 +11,7 @@ const { auth } = require('./config/auth')
 const cors = require('cors')
 dotenv.config({ path: '.env' });
 const app = express();
+global.__basedir = __dirname;
 
 connectDB();
 
