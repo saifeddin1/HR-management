@@ -1,4 +1,4 @@
-const YearMonthCondition = (yearMonth) => yearMonth ? [ // REMOVE INTO UTILS
+const YearMonthCondition = (yearMonth, field) => yearMonth ? [ // REMOVE INTO UTILS
     {
         '$eq': [
             {
@@ -12,7 +12,7 @@ const YearMonthCondition = (yearMonth) => yearMonth ? [ // REMOVE INTO UTILS
 
                                     {
 
-                                        '$toString': '$updatedAt'
+                                        '$toString': field
 
                                     }, 'T'
 

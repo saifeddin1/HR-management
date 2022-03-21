@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-// const { salarySchema } = require('./salarySchema')
+const { salarySchema } = require('../models/Salary')
 
 const { Schema } = mongoose;
 
@@ -8,9 +8,9 @@ const ContractSchema = Schema(
         userId: {
             type: mongoose.Schema.Types.ObjectId
         },
-        // salary: {
-        //     type: salarySchema
-        // },
+        salary: {
+            type: salarySchema
+        },
         contractType: String,
         hoursNumber: Number,
         startDate: Date,
