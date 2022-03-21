@@ -7,7 +7,7 @@ const TimeSheetDeclarationSchema = Schema(
     {
         userId: {
             type: mongoose.Schema.Types.ObjectId,
-            unique: true
+
         },
         month: {
             type: Number,

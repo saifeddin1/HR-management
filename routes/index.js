@@ -12,6 +12,7 @@ router.use(`${apiVersion}/timeSheets`, require('./api/timeSheets'));
 router.use(`${apiVersion}/timeSheetDeclarations`, require('./api/timeSheetDeclarations'));
 router.use(`${apiVersion}/timeSlots`, require('./api/timeSlots'));
 router.use(`${apiVersion}/notifications`, require('./api/notifications'));
+router.use(`${apiVersion}/yearMonths`, require('./api/yearMonths'));
 router.use(`${apiVersion}/users`, require('./api/users'));
 
 module.exports = router;

@@ -4,6 +4,8 @@ const timeSheetController = require('../../controllers/timeSheet')
 router.put('/updateTimeSheetForEmployee/:timeSheetId', timeSheetController.updateTimeSheetForEmployee);
 router.get('/getCurrentTimesheet/:date', timeSheetController.getCurrentTimesheet);
 router.get('/getEmployeeTimeSheets', timeSheetController.getEmployeeTimeSheets);
+router.get('/getMonthlyWorkingHours/:date', timeSheetController.getMonthlyWorkingHours);
+router.get('/getMonthlyEmployeeTimesheets/:yearMonth', timeSheetController.getMonthlyEmployeeTimesheets);
 router.get('/', timeSheetController.getAllTimeSheets);
 router.post('/', timeSheetController.createNewTimeSheet);
 router.get('/:id', timeSheetController.getOneTimeSheet);

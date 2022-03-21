@@ -63,7 +63,7 @@ module.exports.getCollaborators = async (req, res) => {
 // Manage employees files for admin 
 //   Working ✅
 module.exports.updateEmployeeFileDetails = async (req, res) => {
-    const allowed_updates = ['phone', 'address', 'proEmail']
+    const allowed_updates = ['phone', 'address', 'proEmail', 'description']
     const userId = getCurrentUserId(req, res);
 
     logger.info("\n\n req body : ", req.body, "\n\n")

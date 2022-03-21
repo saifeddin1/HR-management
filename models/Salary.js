@@ -5,11 +5,8 @@ const { Schema } = mongoose;
 
 const salarySchema = Schema(
     {
-        contract: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Contract'
-        },
-        seniorityDate: String,
+
+        seniority: Number,
         annualCompensation: { annual: Number, effective: Number, gross: Number, bonus: Number },
         enabled: {
             type: Boolean,

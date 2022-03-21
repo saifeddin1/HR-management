@@ -9,7 +9,7 @@ const profileSchema = Schema(
     {
         jobType: {
             type: String,
-            enum: ["Full-Time", "Part-Time", "Contact", "Internship"]
+            enum: ["Full-Time", "Part-Time", "Contract", "Internship"]
         },
         workFrom: {
             type: String,
@@ -25,6 +25,7 @@ const profileSchema = Schema(
         departement: String,
         proEmail: { type: String, required: false },
         image: String,
+        description: String
 
     },
     { timestamps: true }

@@ -5,6 +5,7 @@ const { logger } = require('../config/logger')
 const mongoose = require('mongoose');
 const YearMonthCondition = require('../utils/YearMonthCondition');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
+const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 
 module.exports.getAllTimeSheets = factory.getAll(TimeSheet);
 module.exports.getOneTimeSheet = factory.getOne(TimeSheet);
@@ -57,7 +58,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
                                 ]
                             },
 
-                            ...YearMonthCondition(yearMonth)
+                            ...YearMonthCondition(yearMonth, '$updatedAt')
                         ]
 
                 }
@@ -125,4 +126,124 @@ module.exports.getCurrentTimesheet = async (req, res) => {
     }
 
 
+}
+
+
+module.exports.getMonthlyWorkingHours = async (req, res) => {
+
+    const userId = getCurrentUserId(req, res)
+    var yearMonth = req.params?.date?.split("T")[0].substr(0, 7);
+    var aggregation = [
+        {
+            '$match': {
+                '$expr': {
+                    '$and':
+                        [
+                            ...YearMonthCondition(yearMonth, '$date'),
+                            {
+                                userId: userId
+                            },
+
+                        ]
+
+                }
+            }
+        },
+        {
+            '$group': {
+                _id: null,
+                user: { $first: userId },
+                date: { $first: req.params.date },
+                sum: {
+                    $sum: "$workingHours"
+                }
+            }
+        }
+
+    ]
+    aggregation.unshift({
+        '$match': {
+
+            enabled: true
+        }
+    })
+    try {
+
+        const workingHoursSum = await TimeSheet.aggregate(aggregation);
+        if (!workingHoursSum) return res.status(404).json({ message: req.t('ERROR.NOT_FOUND') })
+
+        res.status(200).json({
+            response: workingHoursSum,
+            message: req.t('SUCCESS.RETRIEVED')
+        })
+
+    } catch (e) {
+        logger.info(`Error in get hours sum func() ${e}`)
+        return res.status(400).json({
+            message: req.t("ERROR.BAD_REQUEST")
+        })
+    }
+}
+
+module.exports.getMonthlyEmployeeTimesheets = async (req, res) => {
+    const userId = getCurrentUserId(req, res)
+    var yearMonth = req.params.yearMonth
+    var aggregation = aggregationWithFacet(req, res)
+
+    aggregation.unshift({
+        "$match": {
+            "$expr": {
+                "$and": [
+                    {
+                        "$eq": [
+                            {
+                                "$substr": [
+                                    {
+                                        "$arrayElemAt": [
+                                            {
+                                                "$split": [
+                                                    {
+                                                        "$toString": "$date"
+                                                    },
+                                                    "T"
+                                                ]
+                                            },
+                                            0
+                                        ]
+                                    },
+                                    0,
+                                    7
+                                ]
+                            },
+                            yearMonth
+                        ],
+
+                    },
+                    {
+                        "$eq": [
+                            "$userId",
+                            mongoose.Types.ObjectId(userId)
+                        ]
+                    },
+                ]
+            }
+        }
+    })
+    aggregation.unshift({
+        '$match': {
+
+            enabled: true
+        }
+    })
+    try {
+        const monthlyTimeSheet = await TimeSheet.aggregate(aggregation)
+        if (!monthlyTimeSheet || !monthlyTimeSheet.length) return res.status(404).json({ message: req.t('ERROR.NOT_FOUND') })
+
+        return res.status(200).json({
+            response: monthlyTimeSheet,
+            message: req.t('SUCCESS.RETRIEVED')
+        })
+    } catch (error) {
+
+    }
 }

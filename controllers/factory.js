@@ -64,7 +64,7 @@ const createOne = (Model) =>
 
         try {
             await object.save();
-            logger.info("Saved ");
+            logger.info("Saved :", object);
             res.status(201).json(
                 {
                     response: object,
