@@ -247,3 +247,35 @@ module.exports.getMonthlyEmployeeTimesheets = async (req, res) => {
 
     }
 }
+
+
+module.exports.getTimesheetsByUserId = async (req, res) => {
+    const userId = req.params.userId;
+    var aggregation = aggregationWithFacet(req, res);
+
+    try {
+        aggregation.unshift({
+            $match: {
+                userId: mongoose.Types.ObjectId(userId),
+                enabled: true
+            }
+        })
+
+
+        // const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
+        const timesheetsById = await TimeSheet.aggregate(aggregation);
+        !timesheetsById ?
+            req.t("ERROR.NOT_FOUND")
+            : res.status(200).json({
+                response: timesheetsById,
+                message: req.t("SUCCESS.RETRIEVED")
+            })
+    } catch (e) {
+        logger.debug(JSON.stringify(e))
+        return res.status(400).json({
+            message: req.t("ERROR.BAD_REQUEST")
+
+        });
+    }
+
+}

@@ -43,17 +43,16 @@ module.exports.createNewYearMonth = async (req, res) => {
     })
 
     let daysCount = daysInMonth(month, year);
-
     const newYearMonth = new YearMonth({ title: `${year}-${month}` });
     console.log("newYearMonth :", newYearMonth);
 
     try {
-        await newYearMonth.save();
+        if (newYearMonth !== null) { await newYearMonth.save() }
         var timesheets = []
         for (var i = 0; i < daysCount; i++) {
-            await timesheets.push(TimeSheet.create({
+            timesheets.push(TimeSheet.create({
                 userId: mongoose.Types.ObjectId(userId),
-                date: new Date(year, month - 1, i + 1),
+                date: new Date(year, month - 1, i + 2),
                 workingHours: 0,
                 note: ''
             }))
@@ -81,3 +80,23 @@ module.exports.createNewYearMonth = async (req, res) => {
         })
     }
 }
+
+// module.exports.getDistinctYearMonths = async (req, res) => {
+//     try {
+//         var yearMonthItems;
+//         await YearMonth.distinct('_id', (err, docs){
+//             if (!docs || !(docs.length)) { return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") }) }
+//             yearMonthItems = docs
+//         })
+//         res.status(200).json({
+//             response: objects,
+//             message: req.t("SUCCESS.RETRIEVED")
+//         })
+//     } catch (e) {
+//         logger.error(`Error in getAll() function`)
+//         return res.status(400).json({
+//             message: req.t("ERROR.BAD_REQUEST")
+//         });
+//     }
+
+// }
