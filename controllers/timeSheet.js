@@ -133,6 +133,7 @@ module.exports.getMonthlyWorkingHours = async (req, res) => {
 
     const userId = getCurrentUserId(req, res)
     var yearMonth = req.params?.date?.split("T")[0].substr(0, 7);
+    console.log("📆📆 ~.getMonthlyWorkingHours= ~ yearMonth", yearMonth)
     var aggregation = [
         {
             '$match': {
@@ -171,7 +172,7 @@ module.exports.getMonthlyWorkingHours = async (req, res) => {
 
         const workingHoursSum = await TimeSheet.aggregate(aggregation);
         if (!workingHoursSum) return res.status(404).json({ message: req.t('ERROR.NOT_FOUND') })
-
+        console.log('workingHoursSum', workingHoursSum);
         res.status(200).json({
             response: workingHoursSum,
             message: req.t('SUCCESS.RETRIEVED')
@@ -252,11 +253,50 @@ module.exports.getMonthlyEmployeeTimesheets = async (req, res) => {
 module.exports.getTimesheetsByUserId = async (req, res) => {
     const userId = req.params.userId;
     var aggregation = aggregationWithFacet(req, res);
-
+    const yearMonth = req.params.yearMonth
     try {
         aggregation.unshift({
-            $match: {
-                userId: mongoose.Types.ObjectId(userId),
+            "$match": {
+                "$expr": {
+                    "$and": [
+                        {
+                            "$eq": [
+                                {
+                                    "$substr": [
+                                        {
+                                            "$arrayElemAt": [
+                                                {
+                                                    "$split": [
+                                                        {
+                                                            "$toString": "$date"
+                                                        },
+                                                        "T"
+                                                    ]
+                                                },
+                                                0
+                                            ]
+                                        },
+                                        0,
+                                        7
+                                    ]
+                                },
+                                yearMonth
+                            ],
+
+                        },
+                        {
+                            "$eq": [
+                                "$userId",
+                                mongoose.Types.ObjectId(userId)
+                            ]
+                        },
+                    ]
+                }
+            }
+        })
+        aggregation.unshift({
+            '$match': {
+
                 enabled: true
             }
         })

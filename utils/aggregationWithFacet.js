@@ -17,7 +17,7 @@ module.exports.aggregationWithFacet = (req, res) => {
     }
 
     logger.info(sort.length);
-    logger.info("Method : getAllFilesWithQuries, message : building aggregation ...");
+    logger.info("Method : aggregationWithFacet, message : building aggregation ...");
     var aggregation = [
         {
             '$facet': {
