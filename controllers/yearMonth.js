@@ -45,9 +45,11 @@ module.exports.createNewYearMonth = async (req, res) => {
     let daysCount = daysInMonth(month, year);
     const newYearMonth = new YearMonth({ title: `${year}-${month}` });
     console.log("newYearMonth :", newYearMonth);
-
+    const existingYearMonth = await YearMonth.find({ title: newYearMonth.title })
     try {
-        if (newYearMonth !== null) { await newYearMonth.save() }
+        if (!existingYearMonth || !existingYearMonth.length) {
+            await newYearMonth.save()
+        }
         var timesheets = []
         for (var i = 0; i < daysCount; i++) {
             timesheets.push(TimeSheet.create({

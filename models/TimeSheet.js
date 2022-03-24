@@ -14,7 +14,9 @@ const timeSheetSchema = Schema(
             default: Date.now
         },
         workingHours: Number,
+        extraHours: { type: Number, default: 0 },
         note: String,
+        isDayOff: { type: Boolean, default: false },
         enabled: {
             type: Boolean,
             default: true,
