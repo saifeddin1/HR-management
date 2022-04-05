@@ -136,18 +136,30 @@ module.exports.updateStatus = async (req, res) => {
         await object.save();
         logger.info("saved");
         if (object.status === 'Approved') {
-            const timesheets = await TimeSheet.aggregate(aggregation)
-            console.log("⚡🤦‍♂️🤦‍♂️❌ ~ f.exports.updateStatus= ~ timesheets", timesheets)
-            if (!timesheets || !timesheets.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
+            console.log('is approveddddddddddd \n');
             await TimeSheet.updateMany({
 
                 userId: object?.userId,
                 date: {
                     "$gte": object.startDate,
-                    "$lte": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                    // always we have an extra day in timeoff
+                    "$lt": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
                 }
 
             }, { $set: { isDayOff: true } })
+        }
+        if (object.status === 'Rejected') {
+            console.log('is rejectedddddddddddddddd \n');
+            await TimeSheet.updateMany({
+
+                userId: object?.userId,
+                date: {
+                    "$gte": object.startDate,
+                    // always we have an extra day in timeoff
+                    "$lt": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                }
+
+            }, { $set: { isDayOff: false } })
         }
         return !object
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
