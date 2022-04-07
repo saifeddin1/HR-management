@@ -36,3 +36,8 @@ app.get('/', (req, res) => res.send('Hello World!'));
 app.listen((port), (error) =>
   error ? logger.error(error)
     : logger.info(`Server running on http://${address}:${port}`));
+
+
+const  run= require('./kafka')
+
+run().catch(console.error)
