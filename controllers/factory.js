@@ -2,6 +2,8 @@ const { logger } = require('../config/logger')
 const mongoose = require('mongoose')
 const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
+const { TimeSheet } = require('../models/TimeSheet');
+const { TimeOff } = require('../models/TimeOff');
 
 
 const getAll = (Model) =>
@@ -92,6 +94,18 @@ const updateOne = (Model) =>
                 object[update] = req.body[update];
             });
             await object.save();
+
+            if (Model === TimeOff && object.status === 'Approved') {
+                console.log('Model is Timeoff, disbaling related t-sheets');
+                await TimeSheet.updateMany({
+                    userId: object?.userId,
+                    date: {
+                        "$gte": object.startDate,
+                        "$lte": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                    }
+
+                }, { $set: { isDayOff: true } })
+            }
             return res.json(
                 {
                     response: object,

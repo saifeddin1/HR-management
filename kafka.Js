@@ -16,15 +16,15 @@ const kafka = new Kafka({
 const run = async (req ,res) => {
     
     await consumer.connect()
-    await consumer.subscribe({ topic: 'test', fromBeginning: true })
+    await consumer.subscribe({ topic: 'my-topic2', fromBeginning: true })
   
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
        
        
-        
+        console.log("****************** wsouuul mena zeda******************")
         const obj = JSON.parse(message.value);
-        logger.info(obj)
+        
         try{
             
               const response= await File.updateOne( {"userId": ObjectId(obj._id)}, {$set:obj}, {upsert: true})
@@ -38,7 +38,7 @@ const run = async (req ,res) => {
                 }catch(e){
                     logger.info("catch : "+e)
                 }
-          //  }
+          
        
       },
     })
