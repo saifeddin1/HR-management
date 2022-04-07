@@ -20,7 +20,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
     const { timeSheetId } = req.params
     const validationErrors = []
     const updates = Object.keys(req.body);
-    const allowed = ["workingHours", "note", "date"];
+    const allowed = ["workingHours", "note", "date", "extraHours"];
     const isValidOperation = updates.every(update => {
         const isValid = allowed.includes(update);
         if (!isValid) validationErrors.push(update);
@@ -83,7 +83,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
             // case empty array , we can modify or create timesheet
             logger.info("Im here, array empty");
 
-            await TimeSheet.findByIdAndUpdate(timeSheetId, { note: req.body.note, workingHours: req.body.workingHours, date: req.body.date })
+            await TimeSheet.findByIdAndUpdate(timeSheetId, { note: req.body.note, workingHours: req.body.workingHours, date: req.body.date, extraHours: req.body.extraHours })
             return res.status(200).json({
                 message: req.t("SUCCESS.EDITED"),
             })
@@ -129,8 +129,9 @@ module.exports.getCurrentTimesheet = async (req, res) => {
 }
 
 
-module.exports.getMonthlyWorkingHours = async (req, res) => {
+module.exports.getMonthlyHours = async (req, res) => {
 
+    var field = req.query?.field
     const userId = getCurrentUserId(req, res)
     var yearMonth = req.params?.date?.split("T")[0].substr(0, 7);
     console.log("📆📆 ~.getMonthlyWorkingHours= ~ yearMonth", yearMonth)
@@ -156,7 +157,7 @@ module.exports.getMonthlyWorkingHours = async (req, res) => {
                 user: { $first: userId },
                 date: { $first: req.params.date },
                 sum: {
-                    $sum: "$workingHours"
+                    $sum: `$${field}`
                 }
             }
         }
@@ -170,11 +171,11 @@ module.exports.getMonthlyWorkingHours = async (req, res) => {
     })
     try {
 
-        const workingHoursSum = await TimeSheet.aggregate(aggregation);
-        if (!workingHoursSum) return res.status(404).json({ message: req.t('ERROR.NOT_FOUND') })
-        console.log('workingHoursSum', workingHoursSum);
+        const hours = await TimeSheet.aggregate(aggregation);
+        console.log('\n\n hours', hours);
+        if (!hours) return res.status(404).json({ message: req.t('ERROR.NOT_FOUND') })
         res.status(200).json({
-            response: workingHoursSum,
+            response: hours,
             message: req.t('SUCCESS.RETRIEVED')
         })
 
@@ -185,6 +186,10 @@ module.exports.getMonthlyWorkingHours = async (req, res) => {
         })
     }
 }
+
+
+
+
 
 module.exports.getMonthlyEmployeeTimesheets = async (req, res) => {
     const userId = getCurrentUserId(req, res)

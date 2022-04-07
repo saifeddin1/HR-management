@@ -4,6 +4,7 @@ const factory = require('./factory');
 const mongoose = require('mongoose');
 const { logger } = require('../config/logger');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
+const { TimeSheet } = require('../models/TimeSheet');
 
 module.exports.getAllTimeOffs = factory.getAll(TimeOff);
 module.exports.getOneTimeOff = factory.getOne(TimeOff);
@@ -123,17 +124,43 @@ module.exports.updateStatus = async (req, res) => {
     if (!isValidOperation)
         return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
 
-
     try {
         const object = await TimeOff.findOne({ _id: timeOffId });
         if (!object) return res.sendStatus(404);
+
+
         updates.forEach(update => {
             object[update] = req.body[update];
         });
         logger.info("updated");
         await object.save();
         logger.info("saved");
+        if (object.status === 'Approved') {
+            console.log('is approveddddddddddd \n');
+            await TimeSheet.updateMany({
 
+                userId: object?.userId,
+                date: {
+                    "$gte": object.startDate,
+                    // always we have an extra day in timeoff
+                    "$lt": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                }
+
+            }, { $set: { isDayOff: true } })
+        }
+        if (object.status === 'Rejected') {
+            console.log('is rejectedddddddddddddddd \n');
+            await TimeSheet.updateMany({
+
+                userId: object?.userId,
+                date: {
+                    "$gte": object.startDate,
+                    // always we have an extra day in timeoff
+                    "$lt": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                }
+
+            }, { $set: { isDayOff: false } })
+        }
         return !object
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
