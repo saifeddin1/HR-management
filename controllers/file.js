@@ -25,7 +25,7 @@ module.exports.getCollaborators = async (req, res) => {
     logger.info("req.userid", userId);
     var query = [
 
-        { userRef: { '$ne': userId } }
+        { userRef: { '$ne': userId }, enabled: true }
     ]
     var ObjectId = require('mongoose').Types.ObjectId;
     if (typeof userId == "string" && ObjectId.isValid(userId)) {// userId is a valid objectId

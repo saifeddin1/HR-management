@@ -11,6 +11,12 @@ const ContractSchema = Schema(
         salary: {
             type: salarySchema
         },
+        status: {
+            type: String,
+            enum: ['active', 'inactive'],
+            unique: true,
+            default: 'active'
+        },
         contractType: String,
         hoursNumber: Number,
         startDate: Date,

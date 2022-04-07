@@ -4,6 +4,7 @@ const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
 const { TimeSheet } = require('../models/TimeSheet');
 const { TimeOff } = require('../models/TimeOff');
+const { Contract } = require('../models/Contract');
 
 
 const getAll = (Model) =>
@@ -65,6 +66,14 @@ const createOne = (Model) =>
         logger.info("Object :", object);
 
         try {
+            const active = await Contract.findOne({ userId: object.userId, status: 'active', enabled: true })
+            if (Model === Contract && active) {
+                console.log('\n Found active contract  ');
+                active.status = 'inactive'
+                active.save()
+                console.log('changed! :', active)
+
+            }
             await object.save();
             logger.info("Saved :", object);
             res.status(201).json(
