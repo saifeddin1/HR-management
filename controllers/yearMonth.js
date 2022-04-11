@@ -52,12 +52,13 @@ module.exports.createNewYearMonth = async (req, res) => {
         }
         var timesheets = []
         for (var i = 0; i < daysCount; i++) {
-            timesheets.push(TimeSheet.create({
+            timesheets.push(await TimeSheet.create({
                 userId: mongoose.Types.ObjectId(userId),
-                date: new Date(year, month - 1, i + 2),
+                date: new Date(year, month - 1, i + 1),
                 workingHours: 0,
                 note: ''
             }))
+            console.log(timesheets);
         }
 
 

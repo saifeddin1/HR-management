@@ -7,6 +7,7 @@ const { Schema } = mongoose;
 
 const profileSchema = Schema(
     {
+        fullname: String,
         jobType: {
             type: String,
             enum: ["Full-Time", "Part-Time", "Contract", "Internship"]
