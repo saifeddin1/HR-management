@@ -63,20 +63,21 @@ module.exports.getCollaborators = async (req, res) => {
 // Manage employees files for admin 
 //   Working ✅
 module.exports.updateEmployeeFileDetails = async (req, res) => {
-    const allowed_updates = ['phone', 'address', 'proEmail', 'description']
+    const allowed_updates = ['phone', 'address', 'proEmail', 'description', 'fullname']
     const userId = getCurrentUserId(req, res);
 
-    logger.info("\n\n req body : ", req.body, "\n\n")
-    var query = { userRef: req.body.userRef };
+    logger.info("$$$$$ req body : ", req.body, "$$$$$")
+    var query = {};
     try {
 
         // for nested profile fileds
         for (var key of allowed_updates) {
+            // make sure key is not undefined and/or an empty string
             if (req.body['profile'][key] && req.body['profile'][key].length) {
                 query["profile." + key] = req.body['profile'][key];
             }
         }
-        logger.info("\n\n\n Query:", query)
+        logger.info("$$$$ Query:", query)
         const object = await File.updateOne({ userId: mongoose.Types.ObjectId(userId) }, { $set: query });
         logger.info('found object! : ', object)
         if (!object) return res.sendStatus(404);

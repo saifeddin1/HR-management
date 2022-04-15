@@ -8,7 +8,7 @@ const { Contract } = require('../models/Contract');
 
 
 const getAll = (Model) =>
-    // TO DO : pagination 
+
     async (req, res) => {
         try {
             var aggregation = aggregationWithFacet(req, res);
@@ -17,6 +17,7 @@ const getAll = (Model) =>
                     enabled: true
                 }
             })
+            console.log(Model)
             const objects = await Model.aggregate(aggregation)
             if (!objects || !objects.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             res.status(200).json({
@@ -24,7 +25,7 @@ const getAll = (Model) =>
                 message: req.t("SUCCESS.RETRIEVED")
             })
         } catch (e) {
-            logger.error(`Error in getAll() function`)
+            logger.error(`Error in getAll() function`, e)
             return res.status(400).json({
                 message: req.t("ERROR.BAD_REQUEST")
             });

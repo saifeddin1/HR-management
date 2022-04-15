@@ -58,7 +58,6 @@ module.exports.createNewYearMonth = async (req, res) => {
                 workingHours: 0,
                 note: ''
             }))
-            console.log(timesheets);
         }
 
 

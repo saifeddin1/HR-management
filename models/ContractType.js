@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const YearMonthSchema = Schema(
+const ContractTypeSchema = Schema(
     {
         title: {
             type: String,
@@ -16,6 +16,5 @@ const YearMonthSchema = Schema(
 );
 
 
-const YearMonth = mongoose.model('YearMonth', YearMonthSchema);
-
-module.exports = YearMonth;
+const ContractType = mongoose.model('ContractType', ContractTypeSchema);
+module.exports = ContractType;

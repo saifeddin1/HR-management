@@ -23,13 +23,14 @@ module.exports.getEmployeeContractsWithSalary = async (req, res) => {
     logger.debug("⚡~ file: contract.js ~ line 19 ~ userId", userId)
     var query = matchQuery(userId);
 
-    var aggregation = [
-        {
-            '$match': {
-                '$or': query
-            }
+    var aggregation = aggregationWithFacet()
+
+    aggregation.unshift({
+        '$match': {
+            '$or': query
         }
-    ]
+    })
+
 
     logger.debug("Incomoing aggregation: ", aggregation);
 
@@ -78,6 +79,45 @@ module.exports.getAllContractsWithSalaries = async (req, res) => {
             }
         }
     )
+
+    aggregation.unshift(
+        {
+            '$lookup': {
+                'from': 'files',
+                'let': {
+                    'contractUserId': '$userId' // Id of the current file
+                },
+                // 'localField': '_id',
+                'pipeline': [
+                    {
+                        '$match': {
+                            '$expr': {
+                                '$and': [
+                                    {
+                                        '$eq': [
+                                            '$userId', '$$contractUserId'
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        '$project': {
+                            userRef: 1
+                        }
+                    }
+                ],
+                'as': 'user'
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$user"
+            }
+        }
+    )
+
     try {
         const contracts = await Contract.aggregate(aggregation);
 

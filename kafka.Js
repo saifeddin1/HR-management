@@ -6,6 +6,18 @@ const logger = require('./config/logger').logger
 
 const { v4: uuidv4 } = require('uuid');
 
+function makeRef(length) {
+  var result = '';
+  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for (var i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() *
+      charactersLength));
+  }
+  return result;
+}
+
+
 const kafka = new Kafka({
   clientId: 'my-app',
   brokers: ['localhost:9092', 'localhost:9092']
@@ -27,10 +39,10 @@ const run = async (req, res) => {
       const obj = JSON.parse(message.value);
 
       try {
-
+        console.log(obj);
         const response = await File.updateOne({ "userId": ObjectId(obj._id) }, {
           $set: {
-            ...obj, userRef: uuidv4(), profile: {
+            ...obj, userRef: `${obj?.type}-${makeRef(3)}`, profile: {
               fullname: obj.username, proEmail: obj.email
             }
           }
