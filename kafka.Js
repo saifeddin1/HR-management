@@ -10,7 +10,7 @@ const kafka = new Kafka({
     brokers: ['localhost:9092', 'localhost:9092']
   })
   
-  const consumer = kafka.consumer({ groupId: 'kafka' })
+  const consumer = kafka.consumer({ groupId: 'kafka3' })
   
   
 const run = async (req ,res) => {
@@ -22,7 +22,7 @@ const run = async (req ,res) => {
       eachMessage: async ({ topic, partition, message }) => {
        
        
-        console.log("****************** wsouuul mena zeda******************")
+       
         const obj = JSON.parse(message.value);
         
         try{
