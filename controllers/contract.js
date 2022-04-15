@@ -23,13 +23,14 @@ module.exports.getEmployeeContractsWithSalary = async (req, res) => {
     logger.debug("⚡~ file: contract.js ~ line 19 ~ userId", userId)
     var query = matchQuery(userId);
 
-    var aggregation = [
-        {
-            '$match': {
-                '$or': query
-            }
+    var aggregation = aggregationWithFacet()
+
+    aggregation.unshift({
+        '$match': {
+            '$or': query
         }
-    ]
+    })
+
 
     logger.debug("Incomoing aggregation: ", aggregation);
 
@@ -78,6 +79,45 @@ module.exports.getAllContractsWithSalaries = async (req, res) => {
             }
         }
     )
+
+    aggregation.unshift(
+        {
+            '$lookup': {
+                'from': 'files',
+                'let': {
+                    'contractUserId': '$userId' // Id of the current file
+                },
+                // 'localField': '_id',
+                'pipeline': [
+                    {
+                        '$match': {
+                            '$expr': {
+                                '$and': [
+                                    {
+                                        '$eq': [
+                                            '$userId', '$$contractUserId'
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        '$project': {
+                            userRef: 1
+                        }
+                    }
+                ],
+                'as': 'user'
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$user"
+            }
+        }
+    )
+
     try {
         const contracts = await Contract.aggregate(aggregation);
 
@@ -125,6 +165,27 @@ module.exports.updateContractWithSalaries = async (req, res) => {
         );
     } catch (e) {
         logger.error(`Error in updatecontractsSalary() function: `, e.message)
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") })
+    }
+}
+
+module.exports.getActiveContract = async (req, res) => {
+    const userId = getCurrentUserId(req, res);
+
+    try {
+        const activeContract = await Contract.findOne({ userId: userId, status: 'active', enabled: true })
+        return !activeContract
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
+            : res.status(200).json(
+                {
+                    response: activeContract,
+                    message: req.t("SUCCESS.RETRIEVED")
+
+                }
+            );
+    }
+    catch (e) {
+        logger.error(`Error in getActiveContract() function: `, e.message)
         return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") })
     }
 }

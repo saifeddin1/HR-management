@@ -7,10 +7,11 @@ const { Schema } = mongoose;
 
 const profileSchema = Schema(
     {
-        jobType: {
-            type: String,
-            enum: ["Full-Time", "Part-Time", "Contract", "Internship"]
-        },
+        fullname: String,
+        // jobType: {
+        //     type: String,
+        //     enum: ["Full-Time", "Part-Time", "Contract", "Internship"]
+        // },
         workFrom: {
             type: String,
             enum: ["On-Site", "Remote", "Hybrid"]

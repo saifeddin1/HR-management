@@ -243,6 +243,7 @@ module.exports.getMonthlyEmployeeTimesheets = async (req, res) => {
     })
     try {
         const monthlyTimeSheet = await TimeSheet.aggregate(aggregation)
+        console.log("⚡  ~ monthlyTimeSheet", monthlyTimeSheet[0]?.totalData)
         if (!monthlyTimeSheet || !monthlyTimeSheet.length) return res.status(404).json({ message: req.t('ERROR.NOT_FOUND') })
 
         return res.status(200).json({
@@ -250,7 +251,11 @@ module.exports.getMonthlyEmployeeTimesheets = async (req, res) => {
             message: req.t('SUCCESS.RETRIEVED')
         })
     } catch (error) {
+        logger.debug(JSON.stringify(e))
+        return res.status(400).json({
+            message: req.t("ERROR.BAD_REQUEST")
 
+        });
     }
 }
 

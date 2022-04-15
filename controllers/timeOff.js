@@ -5,13 +5,83 @@ const mongoose = require('mongoose');
 const { logger } = require('../config/logger');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
 const { TimeSheet } = require('../models/TimeSheet');
+const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 
-module.exports.getAllTimeOffs = factory.getAll(TimeOff);
+// module.exports.getAllTimeOffs = factory.getAll(TimeOff);
 module.exports.getOneTimeOff = factory.getOne(TimeOff);
 module.exports.createNewTimeOff = factory.createOne(TimeOff);
 module.exports.updateTimeOff = factory.updateOne(TimeOff);
 module.exports.deleteTimeOff = factory.deleteOne(TimeOff);
 module.exports.employeeTimeoffHistory = factory.getEmployeeThing(TimeOff)
+
+module.exports.getAllTimeOffs = async (req, res) => {
+    var aggregation = aggregationWithFacet()
+
+    logger.debug("Incomoing aggregation getAllTimeOffs: ", aggregation);
+    aggregation.unshift(
+        {
+            '$match': {
+                enabled: true
+            }
+        }
+    )
+
+    aggregation.unshift(
+        {
+            '$lookup': {
+                'from': 'files',
+                'let': {
+                    'localUserId': '$userId' // Id of the current file
+                },
+                // 'localField': '_id',
+                'pipeline': [
+                    {
+                        '$match': {
+                            '$expr': {
+                                '$and': [
+                                    {
+                                        '$eq': [
+                                            '$userId', '$$localUserId'
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        '$project': {
+                            userRef: 1
+                        }
+                    }
+                ],
+                'as': 'user'
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$user"
+            }
+        }
+    )
+
+    try {
+        const timeoffs = await TimeOff.aggregate(aggregation);
+
+        logger.debug(timeoffs);
+        return !timeoffs
+            ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
+            : res.status(200).json(
+                {
+                    response: timeoffs,
+                    message: req.t("SUCCESS.RETRIEVED")
+
+                }
+            );
+    } catch (e) {
+        logger.error(`Error in getAllTimeOffs() function: `, e.message)
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") })
+    }
+}
 
 
 module.exports.updateEmployeeTimeoff = async (req, res) => {
@@ -149,7 +219,7 @@ module.exports.updateStatus = async (req, res) => {
             }, { $set: { isDayOff: true } })
         }
         if (object.status === 'Rejected') {
-            console.log('is rejectedddddddddddddddd \n');
+            console.log('is rejected \n');
             await TimeSheet.updateMany({
 
                 userId: object?.userId,
