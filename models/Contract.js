@@ -17,6 +17,11 @@ const ContractSchema = Schema(
             unique: true,
             default: 'active'
         },
+        timesheetType: {
+            type: String,
+            enum: ['ADMINISTRATIVE', 'NON ADMINISTRATIVE'],
+            // required: "This field is required"
+        },
         contractType: String,
         hoursNumber: Number,
         startDate: Date,

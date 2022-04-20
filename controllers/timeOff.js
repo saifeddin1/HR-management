@@ -15,7 +15,8 @@ module.exports.deleteTimeOff = factory.deleteOne(TimeOff);
 module.exports.employeeTimeoffHistory = factory.getEmployeeThing(TimeOff)
 
 module.exports.getAllTimeOffs = async (req, res) => {
-    var aggregation = aggregationWithFacet()
+    console.log("\n", req.query);
+    var aggregation = aggregationWithFacet(req, res)
 
     logger.debug("Incomoing aggregation getAllTimeOffs: ", aggregation);
     aggregation.unshift(
@@ -67,7 +68,7 @@ module.exports.getAllTimeOffs = async (req, res) => {
     try {
         const timeoffs = await TimeOff.aggregate(aggregation);
 
-        logger.debug(timeoffs);
+        // logger.debug(timeoffs);
         return !timeoffs
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(

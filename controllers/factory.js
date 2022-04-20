@@ -145,7 +145,7 @@ const deleteOne = (Model) =>
                 }
             );
         } catch (e) {
-            logger.error(`Error in deleteOne() function`)
+            logger.error(`Error in deleteOne() function: ${e}`)
             return res.status(400).json({
                 message: req.t("ERROR.BAD_REQUEST")
             });
@@ -155,7 +155,7 @@ const deleteOne = (Model) =>
 
 const getEmployeeThing = (Model) =>
     async (req, res) => {
-        // const userId = req.user.id;
+
         const userId = getCurrentUserId(req, res);
         var aggregation = aggregationWithFacet(req, res);
 

@@ -13,7 +13,7 @@ module.exports.getEmployeeInterviews = factory.getEmployeeThing(Interview);
 
 
 module.exports.getAllInterviews = async (req, res) => {
-    var aggregation = aggregationWithFacet()
+    var aggregation = aggregationWithFacet(req, res)
 
     logger.debug("Incomoing aggregation interviews: ", aggregation);
     aggregation.unshift(
@@ -113,7 +113,76 @@ module.exports.getUpcomingInterviews = async (req, res) => {
     }
 }
 
+module.exports.getInterviewsByUserId = async (req, res) => {
+    const userId = req.params.userId
+    var aggregation = aggregationWithFacet(req, res);
 
+    try {
+        aggregation.unshift({
+            $match: {
+                userId: mongoose.Types.ObjectId(userId),
+                enabled: true
+            }
+        })
+
+        aggregation.unshift(
+            {
+                '$lookup': {
+                    'from': 'files',
+                    'let': {
+                        'localUserId': '$userId' // Id of the current file
+                    },
+                    // 'localField': '_id',
+                    'pipeline': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$and': [
+                                        {
+                                            '$eq': [
+                                                '$userId', '$$localUserId'
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            '$project': {
+                                userRef: 1
+                            }
+                        }
+                    ],
+                    'as': 'user'
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$user"
+                }
+            }
+        )
+
+
+        const interviewsByUserId = await Interview.aggregate(aggregation);
+
+        return (!interviewsByUserId || !interviewsByUserId.length) ?
+            res.status(404).json({
+                message: req.t("ERROR.NOT_FOUND")
+
+            })
+            : res.status(200).json({
+                response: interviewsByUserId,
+                message: req.t("SUCCESS.RETRIEVED")
+            })
+    } catch (e) {
+        logger.debug("Error in getInterviewsbyId => ", e)
+        return res.status(400).json({
+            message: req.t("ERROR.BAD_REQUEST")
+
+        });
+    }
+}
 
 
 

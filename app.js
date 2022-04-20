@@ -32,7 +32,6 @@ const port = process.env.PORT || 8080;
 const address = process.env.SERVER_ADDRESS || 'localhost';
 
 app.get('/', (req, res) => res.send('Hello World!'));
-
 app.listen((port), (error) =>
   error ? logger.error(error)
     : logger.info(`Server running on http://${address}:${port}`));
