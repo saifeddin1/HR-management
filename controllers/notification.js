@@ -41,7 +41,7 @@ module.exports.getUnreadNotificationsCount = async (req, res) => {
     }
     try {
         const unreadNotifs = await Notification.find(query);
-        console.log('\n******', unreadNotifs)
+        // console.log('\n******', unreadNotifs)
         if (!unreadNotifs) return res.status(404).json({
             message: req.t("ERROR.NOT_FOUND")
         })

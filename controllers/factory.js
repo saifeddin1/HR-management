@@ -106,12 +106,16 @@ const updateOne = (Model) =>
             await object.save();
 
             if (Model === TimeOff && object.status === 'Approved') {
-                console.log('Model is Timeoff, disbaling related t-sheets');
+                let offDays = new Date(object.endDateSpecs.date).getDate() - new Date(object.startDateSpecs.date).getDate()
+                console.log(offDays);
+                // console.log(new Date(object.startDateSpecs.date));
+                // console.log(new Date(object.endDateSpecs.date));
+                console.log('Model is Timeoff, disbaling related t-sheets', object);
                 await TimeSheet.updateMany({
                     userId: object?.userId,
                     date: {
-                        "$gte": object.startDate,
-                        "$lte": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                        "$gte": object.startDateSpecs.date,
+                        "$lte": new Date(new Date(object.startDateSpecs.date).getTime() - 1000 * 3600 * 24 * (-offDays))
                     }
 
                 }, { $set: { isDayOff: true } })
