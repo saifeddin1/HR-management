@@ -23,7 +23,22 @@ module.exports.getAllInterviews = async (req, res) => {
             }
         }
     )
+    let filterValue = ''
+    if (req.query?.filter) {
+        filterValue = req.query.filter
+        console.log(filterValue)
+        aggregation.unshift(
+            {
+                $match: {
+                    $or: [
+                        { status: { $regex: filterValue, $options: 'i' } },
+                        { title: { $regex: filterValue, $options: 'i' } },
 
+                    ]
+                }
+            }
+        )
+    }
     aggregation.unshift(
         {
             '$lookup': {
@@ -65,7 +80,6 @@ module.exports.getAllInterviews = async (req, res) => {
     try {
         const interviews = await Interview.aggregate(aggregation);
 
-        logger.debug(interviews);
         return !interviews
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
@@ -91,7 +105,10 @@ module.exports.getUpcomingInterviews = async (req, res) => {
         '$match': {
             userId: mongoose.Types.ObjectId(userId),
             date: { '$gte': currentDate },
-            enabled: true
+            enabled: true,
+            status: {
+                '$ne': "canceled"
+            }
         }
     })
     try {
@@ -116,7 +133,7 @@ module.exports.getUpcomingInterviews = async (req, res) => {
 module.exports.getInterviewsByUserId = async (req, res) => {
     const userId = req.params.userId
     var aggregation = aggregationWithFacet(req, res);
-
+    var filterValue = ''
     try {
         aggregation.unshift({
             $match: {
@@ -163,6 +180,21 @@ module.exports.getInterviewsByUserId = async (req, res) => {
             }
         )
 
+        if (req.query?.filter) {
+            filterValue = req.query.filter
+            console.log(filterValue)
+            aggregation.unshift(
+                {
+                    $match: {
+                        $or: [
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { title: { $regex: filterValue, $options: 'i' } },
+
+                        ]
+                    }
+                }
+            )
+        }
 
         const interviewsByUserId = await Interview.aggregate(aggregation);
 

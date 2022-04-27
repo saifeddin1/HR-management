@@ -172,7 +172,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
             res.status(201).json(
                 {
                     response: timeOffRequest,
-                    message: req.t("SUCCESS.ADDED")
+                    message: req.t("SUCCESS.CREATED")
                 }
             )
         } catch (e) {

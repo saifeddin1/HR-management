@@ -69,15 +69,31 @@ module.exports.getAllContractsWithSalaries = async (req, res) => {
     var aggregation = aggregationWithFacet(req, res)
 
     logger.debug("Incomoing aggregation: ", aggregation);
+    let filterValue = ''
+    if (req.query?.filter) {
+        filterValue = req.query.filter
+        console.log(filterValue)
+        aggregation.unshift(
+            {
+                $match: {
+                    $or: [
+                        { status: { $regex: filterValue, $options: 'i' } },
+                        { contractType: { $regex: filterValue, $options: 'i' } },
 
 
+                    ]
+                }
+            }
+        )
+    }
     aggregation.unshift(
 
         {
             '$match': {
                 enabled: true
             }
-        }
+        },
+
     )
 
     aggregation.unshift(

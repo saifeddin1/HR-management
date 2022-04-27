@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { makeRef } = require('../utils/makeRef')
 
 
 const { Schema } = mongoose;
@@ -8,14 +9,10 @@ const timeOffSchema = Schema(
         userId: {
             type: mongoose.Schema.Types.ObjectId
         },
-        // startDate: {
-        //     type: Date,
-        //     required: "Start date is required"
-        // },
-        // offDays: {
-        //     type: Number,
-        //     required: "Number of days off is required",
-        // },
+        ref: {
+            type: String,
+            default: `Timeoff-${makeRef(3)}`
+        },
         startDateSpecs: {
             date: Date,
             from: {

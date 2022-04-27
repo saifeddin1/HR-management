@@ -29,7 +29,7 @@ module.exports.createDeclarationAsEmployee = async (req, res) => {
         res.status(201).json(
             {
                 response: declararation,
-                message: req.t("SUCCESS.ADDED")
+                message: req.t("SUCCESS.CREATED")
             }
         )
 

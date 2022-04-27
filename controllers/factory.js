@@ -5,6 +5,8 @@ const { getCurrentUserId } = require('../utils/getCurrentUser');
 const { TimeSheet } = require('../models/TimeSheet');
 const { TimeOff } = require('../models/TimeOff');
 const { Contract } = require('../models/Contract');
+const { Interview } = require('../models/Interview');
+const File = require('../models/File');
 
 
 const getAll = (Model) =>
@@ -170,6 +172,24 @@ const getEmployeeThing = (Model) =>
                     enabled: true
                 }
             })
+            if (Model === Interview) {
+                var filterValue = ''
+                if (req.query?.filter) {
+                    filterValue = req.query.filter
+                    console.log(filterValue)
+                    aggregation.unshift(
+                        {
+                            $match: {
+                                $or: [
+                                    { status: { $regex: filterValue, $options: 'i' } },
+                                    { title: { $regex: filterValue, $options: 'i' } },
+
+                                ]
+                            }
+                        }
+                    )
+                }
+            }
             logger.info("Entered Get Employee" + Model.modelName);
 
             // const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
