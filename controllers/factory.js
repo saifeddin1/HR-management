@@ -4,10 +4,13 @@ const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
 const { TimeSheet } = require('../models/TimeSheet');
 const { TimeOff } = require('../models/TimeOff');
+const { Contract } = require('../models/Contract');
+const { Interview } = require('../models/Interview');
+const File = require('../models/File');
 
 
 const getAll = (Model) =>
-    // TO DO : pagination 
+
     async (req, res) => {
         try {
             var aggregation = aggregationWithFacet(req, res);
@@ -16,6 +19,7 @@ const getAll = (Model) =>
                     enabled: true
                 }
             })
+            console.log(Model)
             const objects = await Model.aggregate(aggregation)
             if (!objects || !objects.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             res.status(200).json({
@@ -23,7 +27,7 @@ const getAll = (Model) =>
                 message: req.t("SUCCESS.RETRIEVED")
             })
         } catch (e) {
-            logger.error(`Error in getAll() function`)
+            logger.error(`Error in getAll() function`, e)
             return res.status(400).json({
                 message: req.t("ERROR.BAD_REQUEST")
             });
@@ -65,6 +69,14 @@ const createOne = (Model) =>
         logger.info("Object :", object);
 
         try {
+            const active = await Contract.findOne({ userId: object.userId, status: 'active', enabled: true })
+            if (Model === Contract && active) {
+                console.log('\n Found active contract  ');
+                active.status = 'inactive'
+                active.save()
+                console.log('changed! :', active)
+
+            }
             await object.save();
             logger.info("Saved :", object);
             res.status(201).json(
@@ -96,12 +108,16 @@ const updateOne = (Model) =>
             await object.save();
 
             if (Model === TimeOff && object.status === 'Approved') {
-                console.log('Model is Timeoff, disbaling related t-sheets');
+                let offDays = new Date(object.endDateSpecs.date).getDate() - new Date(object.startDateSpecs.date).getDate()
+                console.log(offDays);
+                // console.log(new Date(object.startDateSpecs.date));
+                // console.log(new Date(object.endDateSpecs.date));
+                console.log('Model is Timeoff, disbaling related t-sheets', object);
                 await TimeSheet.updateMany({
                     userId: object?.userId,
                     date: {
-                        "$gte": object.startDate,
-                        "$lte": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                        "$gte": object.startDateSpecs.date,
+                        "$lte": new Date(new Date(object.startDateSpecs.date).getTime() - 1000 * 3600 * 24 * (-offDays))
                     }
 
                 }, { $set: { isDayOff: true } })
@@ -135,7 +151,7 @@ const deleteOne = (Model) =>
                 }
             );
         } catch (e) {
-            logger.error(`Error in deleteOne() function`)
+            logger.error(`Error in deleteOne() function: ${e}`)
             return res.status(400).json({
                 message: req.t("ERROR.BAD_REQUEST")
             });
@@ -145,7 +161,7 @@ const deleteOne = (Model) =>
 
 const getEmployeeThing = (Model) =>
     async (req, res) => {
-        // const userId = req.user.id;
+
         const userId = getCurrentUserId(req, res);
         var aggregation = aggregationWithFacet(req, res);
 
@@ -156,6 +172,24 @@ const getEmployeeThing = (Model) =>
                     enabled: true
                 }
             })
+            if (Model === Interview) {
+                var filterValue = ''
+                if (req.query?.filter) {
+                    filterValue = req.query.filter
+                    console.log(filterValue)
+                    aggregation.unshift(
+                        {
+                            $match: {
+                                $or: [
+                                    { status: { $regex: filterValue, $options: 'i' } },
+                                    { title: { $regex: filterValue, $options: 'i' } },
+
+                                ]
+                            }
+                        }
+                    )
+                }
+            }
             logger.info("Entered Get Employee" + Model.modelName);
 
             // const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });

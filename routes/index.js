@@ -13,6 +13,9 @@ router.use(`${apiVersion}/timeSheetDeclarations`, require('./api/timeSheetDeclar
 router.use(`${apiVersion}/timeSlots`, require('./api/timeSlots'));
 router.use(`${apiVersion}/notifications`, require('./api/notifications'));
 router.use(`${apiVersion}/yearMonths`, require('./api/yearMonths'));
+router.use(`${apiVersion}/contractTypes`, require('./api/contractTypes'));
+router.use(`${apiVersion}/levels`, require('./api/levels'));
+router.use(`${apiVersion}/workFroms`, require('./api/workFroms'));
 router.use(`${apiVersion}/users`, require('./api/users'));
 
 module.exports = router;

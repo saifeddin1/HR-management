@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const YearMonthSchema = Schema(
+const WorkFromSchema = Schema(
     {
         title: {
             type: String,
@@ -16,6 +16,5 @@ const YearMonthSchema = Schema(
 );
 
 
-const YearMonth = mongoose.model('YearMonth', YearMonthSchema);
-
-module.exports = YearMonth;
+const WorkFrom = mongoose.model('WorkFrom', WorkFromSchema);
+module.exports = WorkFrom;
