@@ -65,6 +65,24 @@ module.exports.getAllTimeOffs = async (req, res) => {
         }
     )
 
+
+    if (req.query?.filter) {
+        filterValue = req.query.filter
+        console.log(filterValue)
+        aggregation.unshift(
+            {
+                $match: {
+                    $or: [
+                        { ref: { $regex: filterValue, $options: 'i' } },
+                        { status: { $regex: filterValue, $options: 'i' } },
+                        { user: { userRef: { $regex: filterValue, $options: 'i' } } }
+
+                    ]
+                }
+            }
+        )
+    }
+
     try {
         const timeoffs = await TimeOff.aggregate(aggregation);
 

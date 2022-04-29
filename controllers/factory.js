@@ -19,6 +19,63 @@ const getAll = (Model) =>
                     enabled: true
                 }
             })
+
+            var filterValue = ''
+            if (req.query?.filter) {
+                filterValue = req.query.filter
+                console.log(filterValue)
+
+                switch (Model) {
+                    case Interview:
+                        query = [
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { title: { $regex: filterValue, $options: 'i' } },
+                        ]
+                        break;
+                    case Contract:
+                        query = [
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { contractType: { $regex: filterValue, $options: 'i' } }
+                        ]
+                    case File:
+                        query = [
+                            { userRef: { $regex: filterValue, $options: 'i' } },
+                            {
+                                profile:
+                                {
+                                    fullname: { $regex: filterValue, $options: 'i' },
+                                    phone: { $regex: filterValue, $options: 'i' },
+                                    address: { $regex: filterValue, $options: 'i' },
+                                    position: { $regex: filterValue, $options: 'i' },
+                                    departement: { $regex: filterValue, $options: 'i' },
+                                    proEmail: { $regex: filterValue, $options: 'i' },
+                                    workFrom: { $regex: filterValue, $options: 'i' },
+                                    seniorityLevel: { $regex: filterValue, $options: 'i' }
+                                },
+                            }
+
+
+                        ]
+                    case TimeOff:
+                        query = [
+                            { ref: { $regex: filterValue, $options: 'i' } },
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { user: { userRef: { $regex: filterValue, $options: 'i' } } }
+
+                        ]
+                    default:
+                        break;
+                }
+
+                aggregation.unshift(
+                    {
+                        $match: {
+                            $or: query
+                        }
+                    }
+                )
+            }
+
             console.log(Model)
             const objects = await Model.aggregate(aggregation)
             if (!objects || !objects.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
@@ -172,24 +229,64 @@ const getEmployeeThing = (Model) =>
                     enabled: true
                 }
             })
-            if (Model === Interview) {
-                var filterValue = ''
-                if (req.query?.filter) {
-                    filterValue = req.query.filter
-                    console.log(filterValue)
-                    aggregation.unshift(
-                        {
-                            $match: {
-                                $or: [
-                                    { status: { $regex: filterValue, $options: 'i' } },
-                                    { title: { $regex: filterValue, $options: 'i' } },
+            let query = []
 
-                                ]
+            var filterValue = ''
+            if (req.query?.filter) {
+                filterValue = req.query.filter
+                console.log(filterValue)
+
+                switch (Model) {
+                    case Interview:
+                        query = [
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { title: { $regex: filterValue, $options: 'i' } },
+                        ]
+                        break;
+                    case Contract:
+                        query = [
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { contractType: { $regex: filterValue, $options: 'i' } }
+                        ]
+                    case File:
+                        query = [
+                            { userRef: { $regex: filterValue, $options: 'i' } },
+                            {
+                                profile:
+                                {
+                                    fullname: { $regex: filterValue, $options: 'i' },
+                                    phone: { $regex: filterValue, $options: 'i' },
+                                    address: { $regex: filterValue, $options: 'i' },
+                                    position: { $regex: filterValue, $options: 'i' },
+                                    departement: { $regex: filterValue, $options: 'i' },
+                                    proEmail: { $regex: filterValue, $options: 'i' },
+                                    workFrom: { $regex: filterValue, $options: 'i' },
+                                    seniorityLevel: { $regex: filterValue, $options: 'i' }
+                                },
                             }
-                        }
-                    )
+
+
+                        ]
+                    case TimeOff:
+                        query = [
+                            { ref: { $regex: filterValue, $options: 'i' } },
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { user: { userRef: { $regex: filterValue, $options: 'i' } } }
+
+                        ]
+                    default:
+                        break;
                 }
+
+                aggregation.unshift(
+                    {
+                        $match: {
+                            $or: query
+                        }
+                    }
+                )
             }
+
             logger.info("Entered Get Employee" + Model.modelName);
 
             // const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });

@@ -8,11 +8,66 @@ const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 
-module.exports.getAllFiles = factory.getAll(File);
+// module.exports.getAllFiles = factory.getAll(File);
 module.exports.getOneFile = factory.getOne(File);
 module.exports.createNewFile = factory.createOne(File);
 module.exports.updateFile = factory.updateOne(File);
 module.exports.deleteFile = factory.deleteOne(File);
+
+
+module.exports.getAllFiles =
+    async (req, res) => {
+
+        let filterValue = ''
+        var aggregation = aggregationWithFacet(req, res);
+        aggregation.unshift({
+            $match: {
+                enabled: true
+            }
+        })
+
+        if (req.query?.filter) {
+            filterValue = req.query.filter
+            console.log(filterValue)
+            aggregation.unshift(
+                {
+                    $match: {
+                        $or: [
+                            { userRef: { $regex: filterValue, $options: 'i' } },
+                            {
+                                profile:
+                                {
+                                    fullname: { $regex: filterValue, $options: 'i' },
+                                    phone: { $regex: filterValue, $options: 'i' },
+                                    address: { $regex: filterValue, $options: 'i' },
+                                    position: { $regex: filterValue, $options: 'i' },
+                                    departement: { $regex: filterValue, $options: 'i' },
+                                    proEmail: { $regex: filterValue, $options: 'i' },
+                                    workFrom: { $regex: filterValue, $options: 'i' },
+                                    seniorityLevel: { $regex: filterValue, $options: 'i' }
+                                },
+                            }
+                        ]
+                    }
+                }
+            )
+        }
+        try {
+            const files = await File.aggregate(aggregation)
+            if (!files || !files.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
+            res.status(200).json({
+                response: files,
+                message: req.t("SUCCESS.RETRIEVED")
+            })
+        } catch (e) {
+            logger.error(`Error in getAllFiles() function`, e)
+            return res.status(400).json({
+                message: req.t("ERROR.BAD_REQUEST")
+            });
+        }
+
+
+    }
 
 
 // same as getEmployees 
