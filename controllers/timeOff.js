@@ -76,9 +76,7 @@ module.exports.getAllTimeOffs = async (req, res) => {
                         { ref: { $regex: filterValue, $options: 'i' } },
                         { status: { $regex: filterValue, $options: 'i' } },
                         { 'user.userRef': { $regex: filterValue, $options: 'i' } },
-                        { 'startDateSpecs.date': { $regex: filterValue, $options: 'i' } },
                         { 'startDateSpecs.from': { $regex: filterValue, $options: 'i' } },
-                        { 'endDateSpecs.date': { $regex: filterValue, $options: 'i' } },
                         { 'endDateSpecs.to': { $regex: filterValue, $options: 'i' } },
                     ]
                 }

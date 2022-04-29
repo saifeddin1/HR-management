@@ -55,8 +55,9 @@ const getAll = (Model) =>
                         query = [
                             { ref: { $regex: filterValue, $options: 'i' } },
                             { status: { $regex: filterValue, $options: 'i' } },
-                            { user: { userRef: { $regex: filterValue, $options: 'i' } } }
-
+                            { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                            { 'startDateSpecs.from': { $regex: filterValue, $options: 'i' } },
+                            { 'endDateSpecs.to': { $regex: filterValue, $options: 'i' } },
                         ]
                     default:
                         break;
@@ -262,7 +263,9 @@ const getEmployeeThing = (Model) =>
                         query = [
                             { ref: { $regex: filterValue, $options: 'i' } },
                             { status: { $regex: filterValue, $options: 'i' } },
-                            { user: { userRef: { $regex: filterValue, $options: 'i' } } }
+                            { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                            { 'startDateSpecs.from': { $regex: filterValue, $options: 'i' } },
+                            { 'endDateSpecs.to': { $regex: filterValue, $options: 'i' } },
 
                         ]
                     default:
