@@ -40,6 +40,9 @@ module.exports.getEmployeeContractsWithSalary = async (req, res) => {
                     $or: [
                         { status: { $regex: filterValue, $options: 'i' } },
                         { contractType: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'user.profile.fullname': { $regex: filterValue, $options: 'i' } },
+
 
 
                     ]
@@ -95,6 +98,8 @@ module.exports.getAllContractsWithSalaries = async (req, res) => {
                     $or: [
                         { status: { $regex: filterValue, $options: 'i' } },
                         { contractType: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'user.profile.fullname': { $regex: filterValue, $options: 'i' } },
 
 
                     ]
@@ -288,6 +293,8 @@ module.exports.getContractsByUserId = async (req, res) => {
                     $or: [
                         { status: { $regex: filterValue, $options: 'i' } },
                         { contractType: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'user.profile.fullname': { $regex: filterValue, $options: 'i' } },
 
 
                     ]

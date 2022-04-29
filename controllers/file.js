@@ -34,19 +34,17 @@ module.exports.getAllFiles =
                     $match: {
                         $or: [
                             { userRef: { $regex: filterValue, $options: 'i' } },
-                            {
-                                profile:
-                                {
-                                    fullname: { $regex: filterValue, $options: 'i' },
-                                    phone: { $regex: filterValue, $options: 'i' },
-                                    address: { $regex: filterValue, $options: 'i' },
-                                    position: { $regex: filterValue, $options: 'i' },
-                                    departement: { $regex: filterValue, $options: 'i' },
-                                    proEmail: { $regex: filterValue, $options: 'i' },
-                                    workFrom: { $regex: filterValue, $options: 'i' },
-                                    seniorityLevel: { $regex: filterValue, $options: 'i' }
-                                },
-                            }
+
+
+                            { 'profile.fullname': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.phone': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.address': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.position': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.departement': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.proEmail': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.workFrom': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.seniorityLevel': { $regex: filterValue, $options: 'i' } },
+
                         ]
                     }
                 }
