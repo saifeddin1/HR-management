@@ -187,6 +187,24 @@ module.exports.updateContractWithSalaries = async (req, res) => {
     try {
 
         for (var key in contractFields) {
+            // if (key == 'endDate' && new Date(req.body[key]) <= new Date()) {
+            //     console.log('shouldnt add endDate');
+            //     return res.status(400).json({
+            //         message: "End date can't be in the past."
+            //     })
+            // }
+            if (key == 'endDate' && new Date(req.body.endDate) <= new Date(req.body.startDate)) {
+                console.log(' endDate should be greater than start Date ☣️');
+                return res.status(400).json({
+                    message: "End Date should be greater than start Date."
+                })
+            }
+            if (key == 'hoursNumber' && (req.body[key] < 40 || req.body[key] > 48)) {
+                console.log('40 < hours number < 48');
+                return res.status(400).json({
+                    message: "Hours Number should be between 40 and 48."
+                })
+            }
             query[key] = req.body[key];
         }
         for (var key in salaryFields) {

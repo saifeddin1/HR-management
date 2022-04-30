@@ -128,7 +128,35 @@ const createOne = (Model) =>
                 active.status = 'inactive'
                 active.save()
                 console.log('changed! :', active)
+            }
+            if (Model === Contract) {
+                if (new Date(req.body.endDate) <= new Date()) {
+                    console.log(' endDate in the past ☣️');
+                    return res.status(400).json({
+                        message: "End date can't be in the past."
+                    })
+                }
+                if (new Date(req.body.endDate) <= new Date(req.body.startDate)) {
+                    console.log(' endDate should be greater than start Date ☣️');
+                    return res.status(400).json({
+                        message: "End Date should be greater than start Date."
+                    })
+                }
+                if ((req.body.hoursNumber < 40 || req.body.hoursNumber > 48)) {
+                    console.log('40 < hours number < 48');
+                    return res.status(400).json({
+                        message: "Hours Number should be between 40 and 48."
+                    })
+                }
 
+            }
+            if (Model === Interview) {
+                if (new Date(req.body.date) < new Date()) {
+                    console.log(' Date in the past ☣️');
+                    return res.status(400).json({
+                        message: "Date can't be in the past."
+                    })
+                }
             }
             await object.save();
             logger.info("Saved :", object);
@@ -158,6 +186,9 @@ const updateOne = (Model) =>
             updates.forEach(update => {
                 object[update] = req.body[update];
             });
+
+
+
             await object.save();
 
             if (Model === TimeOff && object.status === 'Approved') {

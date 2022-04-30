@@ -7,7 +7,12 @@ const salarySchema = Schema(
     {
 
         seniority: Number,
-        annualCompensation: { annual: Number, effective: Number, gross: Number, bonus: Number },
+        annualCompensation: {
+            annual: { type: Number, min: [5, 'Minimum 5'], max: 999999 },
+            effective: { type: Number, min: [5, 'Minimum 5'], max: 999999 }
+            , gross: { type: Number, min: [5, 'Minimum 5'], max: 999999 }
+            , bonus: { type: Number, min: [5, 'Minimum 5'], max: 999999 }
+        },
         enabled: {
             type: Boolean,
             default: true,

@@ -26,7 +26,7 @@ const run = async (req, res) => {
     eachMessage: async ({ topic, partition, message }) => {
 
 
-      console.log("****************** wsouuul mena zeda******************")
+      console.log("****************** Arrived in HR ******************")
       const obj = JSON.parse(message.value);
 
       try {
