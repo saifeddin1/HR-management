@@ -31,6 +31,7 @@ const run = async (req, res) => {
 
       try {
         console.log(obj);
+
         if (obj?.type && obj.type !== "ESTUDENT"){
          const response = await File.updateOne({ "userId": ObjectId(obj._id) }, {
           $set: {
@@ -40,6 +41,7 @@ const run = async (req, res) => {
           }
          }, { upsert: true })
          logger.info(response)
+
         if (response) {
           logger.info("Executing wihout problems")
         }

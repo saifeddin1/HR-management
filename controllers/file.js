@@ -79,7 +79,15 @@ module.exports.getCollaborators = async (req, res) => {
     logger.info("req.userid", userId);
     var query = [
 
-        { userRef: { '$ne': userId }, enabled: true }
+        {
+            userRef: {
+
+                '$not': { '$regex': 'ESTUDENT', '$options': 'i' }
+
+            },
+            enabled: true,
+
+        }
     ]
     var ObjectId = require('mongoose').Types.ObjectId;
     if (typeof userId == "string" && ObjectId.isValid(userId)) {// userId is a valid objectId
