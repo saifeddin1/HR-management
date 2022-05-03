@@ -185,8 +185,7 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
     if (offDays > userFile.timeOffBalance) {
         return res.status(400).json({ message: "You Timeoff balance is very low." })
     }
-    userFile.timeOffBalance -= offDays;
-    await userFile.save()
+
     console.log("\n⚡timeOffBalance after", userFile.timeOffBalance)
 
     const timeOffRequest = new TimeOff();
@@ -197,14 +196,16 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
     timeOffRequest.userId = mongoose.Types.ObjectId(userId);
     // logger.info('created timoff! : ', timeOffRequest)
     const existingTimeoff = await TimeOff.findOne({ userId: userId, startDateSpecs: timeOffRequest.startDateSpecs, endDateSpecs: timeOffRequest.endDateSpecs, enabled: true })
-    const pendingTimeoff = await TimeOff.findOne({ userId: userId, status: 'Pending' })
+    const pendingTimeoff = await TimeOff.findOne({ userId: userId, status: 'Pending', enabled: true })
     // console.log(pendingTimeoff);
     if (existingTimeoff || pendingTimeoff) {
         res.status(409).json({ message: req.t("ERROR.ALREADY_EXISTS") });
     } else {
 
         try {
+            userFile.timeOffBalance -= offDays;
 
+            await userFile.save()
             await timeOffRequest.save();
 
             // logger.info("⚡  userFile after substraction: ", userFile)
