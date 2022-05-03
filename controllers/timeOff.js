@@ -15,7 +15,8 @@ module.exports.deleteTimeOff = factory.deleteOne(TimeOff);
 module.exports.employeeTimeoffHistory = factory.getEmployeeThing(TimeOff)
 
 module.exports.getAllTimeOffs = async (req, res) => {
-    var aggregation = aggregationWithFacet()
+    console.log("\n", req.query);
+    var aggregation = aggregationWithFacet(req, res)
 
     logger.debug("Incomoing aggregation getAllTimeOffs: ", aggregation);
     aggregation.unshift(
@@ -64,10 +65,29 @@ module.exports.getAllTimeOffs = async (req, res) => {
         }
     )
 
+
+    if (req.query?.filter) {
+        filterValue = req.query.filter
+        console.log(filterValue)
+        aggregation.unshift(
+            {
+                $match: {
+                    $or: [
+                        { ref: { $regex: filterValue, $options: 'i' } },
+                        { status: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'startDateSpecs.from': { $regex: filterValue, $options: 'i' } },
+                        { 'endDateSpecs.to': { $regex: filterValue, $options: 'i' } },
+                    ]
+                }
+            }
+        )
+    }
+
     try {
         const timeoffs = await TimeOff.aggregate(aggregation);
 
-        logger.debug(timeoffs);
+        // logger.debug(timeoffs);
         return !timeoffs
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(
@@ -91,7 +111,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
     const validationErrors = []
     const updates = Object.keys(req.body);
-    const allowedFields = ["startDate", "offDays"]
+    const allowedFields = ["startDateSpecs", "endDateSpecs"]
     const isValidOperation = updates.every(update => {
         const isValid = allowedFields.includes(update);
         if (!isValid) validationErrors.push(update);
@@ -99,7 +119,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
 
 
     try {
@@ -108,7 +128,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
         const timeOff = await TimeOff.findOne({ userId: mongoose.Types.ObjectId(userId), _id: timeOffId });
         if (!timeOff) return res.sendStatus(404);
-        if (!(timeOff.status === "Pending")) return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
+        if (!(timeOff.status === "Pending")) return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
         updates.forEach(update => {
             timeOff[update] = req.body[update];
         });
@@ -135,10 +155,10 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
     // const userId = req.user.id;
     const userId = getCurrentUserId(req, res);
 
-    logger.info("createTimeOffAsEmployee");
+    logger.info("starting createTimeOffAsEmployee");
     const inputFields = Object.keys(req.body);
-
-    const allowedFields = ["startDate", "offDays"]
+    console.log(inputFields);
+    const allowedFields = ["startDateSpecs", "endDateSpecs"]
     const isValidOperation = inputFields.every(input => {
         const isValid = allowedFields.includes(input);
         if (!isValid) validationErrors.push(input);
@@ -146,34 +166,59 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
+
+    if (new Date(req.body.startDateSpecs?.date) < new Date()) {
+        return res.status(400).json({ message: "Start Date can't be in the past." });
+    }
+
+    if (new Date(req.body.startDateSpecs?.date) > new Date(req.body.endDateSpecs.date)) {
+        return res.status(400).json({ message: "End Date sould come after  Start Date." });
+    }
+
+    let offDays = new Date(req.body.endDateSpecs.date).getDate() - new Date(req.body.startDateSpecs.date).getDate()
+    console.log("\n⚡ ~   module.exports.createTimeOffAsEmployee= ~ offDays", offDays)
+
+    const userFile = await File.findOne({ userId: userId });
+    console.log("\n", userFile);
+
+    if (offDays > userFile.timeOffBalance) {
+        return res.status(400).json({ message: "You Timeoff balance is very low." })
+    }
+    userFile.timeOffBalance -= offDays;
+    await userFile.save()
+    console.log("\n⚡timeOffBalance after", userFile.timeOffBalance)
 
     const timeOffRequest = new TimeOff();
     inputFields.forEach(input => {
-        if (new Date(req.body['startDate']) < new Date() || (req.body['offDays'] < 1 || req.body['offDays'] > 22)) return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
         timeOffRequest[input] = req.body[input];
     });
 
     timeOffRequest.userId = mongoose.Types.ObjectId(userId);
-    logger.info('created timoff! : ', timeOffRequest)
+    // logger.info('created timoff! : ', timeOffRequest)
+    const existingTimeoff = await TimeOff.findOne({ userId: userId, startDateSpecs: timeOffRequest.startDateSpecs, endDateSpecs: timeOffRequest.endDateSpecs, enabled: true })
+    const pendingTimeoff = await TimeOff.findOne({ userId: userId, status: 'Pending' })
+    // console.log(pendingTimeoff);
+    if (existingTimeoff || pendingTimeoff) {
+        res.status(409).json({ message: req.t("ERROR.ALREADY_EXISTS") });
+    } else {
 
-    try {
+        try {
 
-        const userFile = await File.updateOne({ userId: userId }, { $inc: { timeOffBalance: -req.body['offDays'] } });
+            await timeOffRequest.save();
 
-        logger.info("⚡  userFile after substraction: ", userFile)
-        await timeOffRequest.save();
-        logger.info("Saved ");
-        res.status(201).json(
-            {
-                response: timeOffRequest,
-                message: req.t("SUCCESS.ADDED")
-            }
-        )
-
-    } catch (e) {
-        logger.info(`Error in createOne() function: ${e.message}`)
-        return res.status(400).json({ message: req.t("ERROR.UNAUTHORIZED") });
+            // logger.info("⚡  userFile after substraction: ", userFile)
+            logger.info("Saved ");
+            res.status(201).json(
+                {
+                    response: timeOffRequest,
+                    message: req.t("SUCCESS.CREATED")
+                }
+            )
+        } catch (e) {
+            logger.info(`Error in createOne() function: ${e.message}`)
+            return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
+        }
     }
 
 }
@@ -204,6 +249,7 @@ module.exports.updateStatus = async (req, res) => {
         });
         logger.info("updated");
         await object.save();
+        let offDays = new Date(object.endDateSpecs.date).getDate() - new Date(object.startDateSpecs.date).getDate()
         logger.info("saved");
         if (object.status === 'Approved') {
             console.log('is approveddddddddddd \n');
@@ -211,9 +257,9 @@ module.exports.updateStatus = async (req, res) => {
 
                 userId: object?.userId,
                 date: {
-                    "$gte": object.startDate,
+                    "$gte": object.startDateSpecs.date,
                     // always we have an extra day in timeoff
-                    "$lt": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                    "$lt": new Date(new Date(object.startDateSpecs.date).getTime() - 1000 * 3600 * 24 * (-offDays))
                 }
 
             }, { $set: { isDayOff: true } })
@@ -224,9 +270,9 @@ module.exports.updateStatus = async (req, res) => {
 
                 userId: object?.userId,
                 date: {
-                    "$gte": object.startDate,
+                    "$gte": object.startDateSpecs.date,
                     // always we have an extra day in timeoff
-                    "$lt": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                    "$lt": new Date(new Date(object.startDateSpecs.date).getTime() - 1000 * 3600 * 24 * (-offDays))
                 }
 
             }, { $set: { isDayOff: false } })

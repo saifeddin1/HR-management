@@ -11,6 +11,7 @@ const NotificationSchema = Schema(
         },
         content: {
             type: String,
+            maxLength: 200,
             required: true
         },
         isRead: {

@@ -29,7 +29,7 @@ module.exports.createDeclarationAsEmployee = async (req, res) => {
         res.status(201).json(
             {
                 response: declararation,
-                message: req.t("SUCCESS.ADDED")
+                message: req.t("SUCCESS.CREATED")
             }
         )
 
@@ -120,7 +120,7 @@ module.exports.updateDeclarationStatus = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(403).send({ message: req.t("ERROR.FORBIDDEN") });
+        return res.status(400).send({ message: req.t("ERROR.BAD_REQUEST") });
 
     try {
         const declaration = await TimeSheetDeclaration.findOne({ _id: declarationId, userId: mongoose.Types.ObjectId(userId) });

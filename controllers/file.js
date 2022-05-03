@@ -8,11 +8,64 @@ const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
 
 
-module.exports.getAllFiles = factory.getAll(File);
+// module.exports.getAllFiles = factory.getAll(File);
 module.exports.getOneFile = factory.getOne(File);
 module.exports.createNewFile = factory.createOne(File);
 module.exports.updateFile = factory.updateOne(File);
 module.exports.deleteFile = factory.deleteOne(File);
+
+
+module.exports.getAllFiles =
+    async (req, res) => {
+
+        let filterValue = ''
+        var aggregation = aggregationWithFacet(req, res);
+        aggregation.unshift({
+            $match: {
+                enabled: true
+            }
+        })
+
+        if (req.query?.filter) {
+            filterValue = req.query.filter
+            console.log(filterValue)
+            aggregation.unshift(
+                {
+                    $match: {
+                        $or: [
+                            { userRef: { $regex: filterValue, $options: 'i' } },
+
+
+                            { 'profile.fullname': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.phone': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.address': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.position': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.departement': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.proEmail': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.workFrom': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.seniorityLevel': { $regex: filterValue, $options: 'i' } },
+
+                        ]
+                    }
+                }
+            )
+        }
+        try {
+            const files = await File.aggregate(aggregation)
+            if (!files || !files.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
+            res.status(200).json({
+                response: files,
+                message: req.t("SUCCESS.RETRIEVED")
+            })
+        } catch (e) {
+            logger.error(`Error in getAllFiles() function`, e)
+            return res.status(400).json({
+                message: req.t("ERROR.BAD_REQUEST")
+            });
+        }
+
+
+    }
 
 
 // same as getEmployees 
@@ -98,6 +151,12 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 module.exports.updateEmployeeFileAsAdmin = async (req, res) => {
     const file_id = req.params.file_id;
     const { _id, createdAt, updatedAt, ...profile_fields } = req.body.profile
+
+    if (req.body?.timeOffBalance < 0 || req.body?.timeOffBalance > 30) {
+        return res.status(400).json({ message: "Timeoff Balance should be in 0 .. 30 ." })
+    }
+
+
     var query = { userRef: req.body.userRef, timeOffBalance: req.body.timeOffBalance };
     console.log("\n\n\n req body:", req.body)
     try {
@@ -268,7 +327,7 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
         // const object = await File.aggregate(aggregation).deleteOne();
         const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
         logger.info(object);
-        object.enabled ? object.enabled = false : res.status(403).json({ message: req.t("ERROR.FORBIDDEN") });
+        object.enabled ? object.enabled = false : res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
         object.save();
         return !object ? res.send(404) : res.json(
             {

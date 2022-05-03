@@ -23,14 +23,33 @@ module.exports.getEmployeeContractsWithSalary = async (req, res) => {
     logger.debug("⚡~ file: contract.js ~ line 19 ~ userId", userId)
     var query = matchQuery(userId);
 
-    var aggregation = aggregationWithFacet()
+    var aggregation = aggregationWithFacet(req, res)
 
     aggregation.unshift({
         '$match': {
             '$or': query
         }
     })
+    let filterValue = ''
+    if (req.query?.filter) {
+        filterValue = req.query.filter
+        console.log(filterValue)
+        aggregation.unshift(
+            {
+                $match: {
+                    $or: [
+                        { status: { $regex: filterValue, $options: 'i' } },
+                        { contractType: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'user.profile.fullname': { $regex: filterValue, $options: 'i' } },
 
+
+
+                    ]
+                }
+            }
+        )
+    }
 
     logger.debug("Incomoing aggregation: ", aggregation);
 
@@ -66,20 +85,39 @@ module.exports.getEmployeeContractsWithSalary = async (req, res) => {
 }
 
 module.exports.getAllContractsWithSalaries = async (req, res) => {
-    var aggregation = aggregationWithFacet()
+    var aggregation = aggregationWithFacet(req, res)
 
     logger.debug("Incomoing aggregation: ", aggregation);
+    let filterValue = ''
+    if (req.query?.filter) {
+        filterValue = req.query.filter
+        console.log(filterValue)
+        aggregation.unshift(
+            {
+                $match: {
+                    $or: [
+                        { status: { $regex: filterValue, $options: 'i' } },
+                        { contractType: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'user.profile.fullname': { $regex: filterValue, $options: 'i' } },
 
 
+                    ]
+                }
+            }
+        )
+    }
     aggregation.unshift(
 
         {
             '$match': {
                 enabled: true
             }
-        }
+        },
+
     )
 
+    // getting user ref with contract
     aggregation.unshift(
         {
             '$lookup': {
@@ -104,7 +142,10 @@ module.exports.getAllContractsWithSalaries = async (req, res) => {
                     },
                     {
                         '$project': {
-                            userRef: 1
+                            userRef: 1,
+                            profile: {
+                                fullname: 1
+                            }
                         }
                     }
                 ],
@@ -146,6 +187,24 @@ module.exports.updateContractWithSalaries = async (req, res) => {
     try {
 
         for (var key in contractFields) {
+            // if (key == 'endDate' && new Date(req.body[key]) <= new Date()) {
+            //     console.log('shouldnt add endDate');
+            //     return res.status(400).json({
+            //         message: "End date can't be in the past."
+            //     })
+            // }
+            if (key == 'endDate' && new Date(req.body.endDate) <= new Date(req.body.startDate)) {
+                console.log(' endDate should be greater than start Date ☣️');
+                return res.status(400).json({
+                    message: "End Date should be greater than start Date."
+                })
+            }
+            if (key == 'hoursNumber' && (req.body[key] < 40 || req.body[key] > 48)) {
+                console.log('40 < hours number < 48');
+                return res.status(400).json({
+                    message: "Hours Number should be between 40 and 48."
+                })
+            }
             query[key] = req.body[key];
         }
         for (var key in salaryFields) {
@@ -187,5 +246,99 @@ module.exports.getActiveContract = async (req, res) => {
     catch (e) {
         logger.error(`Error in getActiveContract() function: `, e.message)
         return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") })
+    }
+}
+
+module.exports.getContractsByUserId = async (req, res) => {
+    const userId = req.params.userId
+    var aggregation = aggregationWithFacet(req, res);
+
+    aggregation.unshift({
+        $match: {
+            userId: mongoose.Types.ObjectId(userId),
+            enabled: true
+        }
+    })
+
+    aggregation.unshift(
+        {
+            '$lookup': {
+                'from': 'files',
+                'let': {
+                    'contractUserId': '$userId'
+                },
+
+                'pipeline': [
+                    {
+                        '$match': {
+                            '$expr': {
+                                '$and': [
+                                    {
+                                        '$eq': [
+                                            '$userId', '$$contractUserId'
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        '$project': {
+                            userRef: 1,
+                            profile: {
+                                fullname: 1
+                            }
+                        }
+                    }
+                ],
+                'as': 'user'
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$user"
+            }
+        }
+    )
+
+    let filterValue = ''
+    if (req.query?.filter) {
+        filterValue = req.query.filter
+        console.log(filterValue)
+        aggregation.unshift(
+            {
+                $match: {
+                    $or: [
+                        { status: { $regex: filterValue, $options: 'i' } },
+                        { contractType: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'user.profile.fullname': { $regex: filterValue, $options: 'i' } },
+
+
+                    ]
+                }
+            }
+        )
+    }
+    try {
+
+
+        const contractsByUserId = await Contract.aggregate(aggregation);
+
+        return (!contractsByUserId || !contractsByUserId.length) ?
+            res.status(404).json({
+                message: req.t("ERROR.NOT_FOUND")
+
+            })
+            : res.status(200).json({
+                response: contractsByUserId,
+                message: req.t("SUCCESS.RETRIEVED")
+            })
+    } catch (e) {
+        logger.debug("Error in getContractsbyId => ", e)
+        return res.status(400).json({
+            message: req.t("ERROR.BAD_REQUEST")
+
+        });
     }
 }

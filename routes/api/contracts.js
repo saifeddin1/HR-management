@@ -4,6 +4,7 @@ const contractController = require('../../controllers/contract')
 router.get('/employeeContracts', contractController.getEmployeeContracts);
 router.get('/employeeContractsWithSalary', contractController.getEmployeeContractsWithSalary);
 router.get('/getAllContractsWithSalaries', contractController.getAllContractsWithSalaries);
+router.get('/getContractsByUserId/:userId', contractController.getContractsByUserId);
 router.put('/updateContractWithSalaries/:contract_id', contractController.updateContractWithSalaries);
 router.get('/getActiveContract', contractController.getActiveContract);
 router.get('/', contractController.getAllContracts);

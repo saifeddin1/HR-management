@@ -32,7 +32,7 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
 
 
     if (!isValidOperation)
-        return res.status(403).send({ message: req.t("ERROR.FORBIDDEN") });
+        return res.status(400).send({ message: req.t("ERROR.BAD_REQUEST") });
 
     var aggregation = [
         {
@@ -74,15 +74,13 @@ module.exports.updateTimeSheetForEmployee = async (req, res) => {
         const timeSheetDeclarationResult = await TimeSheetDeclaration.aggregate(aggregation);
         logger.info("found array", timeSheetDeclarationResult);
         if (timeSheetDeclarationResult?.length) {
-            // case array full :
-            // we have timesheet declaration with status ['declared, "accpteed"] in the chosen month
-            // return BAD REQUEST
             logger.info("Im here, array full :", timeSheetDeclarationResult);
             return res.status(400).json({ message: req.t("ERROR.ALREADY_EXISTS") })
         } else {
             // case empty array , we can modify or create timesheet
             logger.info("Im here, array empty");
-
+            if (req.body.note.length > 200) res.status(400).json({ message: "Note should be less than 200 characters." })
+            if (req.body.workingHours > 10 || req.body.workingHours < 8) res.status(400).json({ message: "Hours should be between 8 and 10 per day." })
             await TimeSheet.findByIdAndUpdate(timeSheetId, { note: req.body.note, workingHours: req.body.workingHours, date: req.body.date, extraHours: req.body.extraHours })
             return res.status(200).json({
                 message: req.t("SUCCESS.EDITED"),

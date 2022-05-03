@@ -5,6 +5,8 @@ const { getCurrentUserId } = require('../utils/getCurrentUser');
 const { TimeSheet } = require('../models/TimeSheet');
 const { TimeOff } = require('../models/TimeOff');
 const { Contract } = require('../models/Contract');
+const { Interview } = require('../models/Interview');
+const File = require('../models/File');
 
 
 const getAll = (Model) =>
@@ -17,6 +19,59 @@ const getAll = (Model) =>
                     enabled: true
                 }
             })
+
+            var filterValue = ''
+            if (req.query?.filter) {
+                filterValue = req.query.filter
+                console.log(filterValue)
+
+                switch (Model) {
+                    case Interview:
+                        query = [
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { title: { $regex: filterValue, $options: 'i' } },
+                        ]
+                        break;
+                    case Contract:
+                        query = [
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { contractType: { $regex: filterValue, $options: 'i' } },
+                            { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        ]
+                    case File:
+                        query = [
+                            { userRef: { $regex: filterValue, $options: 'i' } },
+                            { 'profile.fullname': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.phone': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.address': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.position': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.departement': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.proEmail': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.workFrom': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.seniorityLevel': { $regex: filterValue, $options: 'i' } },
+
+                        ]
+                    case TimeOff:
+                        query = [
+                            { ref: { $regex: filterValue, $options: 'i' } },
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                            { 'startDateSpecs.from': { $regex: filterValue, $options: 'i' } },
+                            { 'endDateSpecs.to': { $regex: filterValue, $options: 'i' } },
+                        ]
+                    default:
+                        break;
+                }
+
+                aggregation.unshift(
+                    {
+                        $match: {
+                            $or: query
+                        }
+                    }
+                )
+            }
+
             console.log(Model)
             const objects = await Model.aggregate(aggregation)
             if (!objects || !objects.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
@@ -73,6 +128,40 @@ const createOne = (Model) =>
                 active.status = 'inactive'
                 active.save()
                 console.log('changed! :', active)
+            }
+            if (Model === Contract) {
+                if (new Date(req.body.endDate) <= new Date()) {
+                    console.log(' endDate in the past ☣️');
+                    return res.status(400).json({
+                        message: "End date can't be in the past."
+                    })
+                }
+                if (new Date(req.body.endDate) <= new Date(req.body.startDate)) {
+                    console.log(' endDate should be greater than start Date ☣️');
+                    return res.status(400).json({
+                        message: "End Date should be greater than start Date."
+                    })
+                }
+                if ((req.body.hoursNumber < 40 || req.body.hoursNumber > 48)) {
+                    console.log('40 < hours number < 48');
+                    return res.status(400).json({
+                        message: "Hours Number should be between 40 and 48."
+                    })
+                }
+
+            }
+            if (Model === Interview) {
+                if (new Date(req.body.date) < new Date()) {
+                    console.log(' Date in the past ☣️');
+                    return res.status(400).json({
+                        message: "Date can't be in the past."
+                    })
+                }
+            }
+            if (Model == File) {
+                if (req.body?.timeOffBalance < 0 || req.body?.timeOffBalance > 30) {
+                    return res.status(400).json({ message: "Timeoff Balance should be in 0 .. 30 ." })
+                }
 
             }
             await object.save();
@@ -103,15 +192,31 @@ const updateOne = (Model) =>
             updates.forEach(update => {
                 object[update] = req.body[update];
             });
+
+
+            if (Model == File) {
+                if (req.body?.timeOffBalance < 0 || req.body?.timeOffBalance > 30) {
+                    return res.status(400).json({ message: "Timeoff Balance should be in 0 .. 30 ." })
+                }
+            }
+            // if (Model === TimeOff) {
+            //     if (new Date(req.body.startDateSpecs?.date) < new Date()) {
+            //         return res.status(401).json({ message: "Start Date can't be in the past." });
+            //     }
+            // }
             await object.save();
 
             if (Model === TimeOff && object.status === 'Approved') {
-                console.log('Model is Timeoff, disbaling related t-sheets');
+                let offDays = new Date(object.endDateSpecs.date).getDate() - new Date(object.startDateSpecs.date).getDate()
+                console.log(offDays);
+                // console.log(new Date(object.startDateSpecs.date));
+                // console.log(new Date(object.endDateSpecs.date));
+                console.log('Model is Timeoff, disbaling related t-sheets', object);
                 await TimeSheet.updateMany({
                     userId: object?.userId,
                     date: {
-                        "$gte": object.startDate,
-                        "$lte": new Date(object.startDate.getTime() - 1000 * 3600 * 24 * (-object.offDays))
+                        "$gte": object.startDateSpecs.date,
+                        "$lte": new Date(new Date(object.startDateSpecs.date).getTime() - 1000 * 3600 * 24 * (-offDays))
                     }
 
                 }, { $set: { isDayOff: true } })
@@ -125,7 +230,7 @@ const updateOne = (Model) =>
 
         } catch (e) {
             logger.error(`Error in updateOne() function : ${e}`)
-            return res.status(403).json({ message: req.t("ERROR.UNAUTHORIZED") });
+            return res.status(401).json({ message: req.t("ERROR.UNAUTHORIZED") });
         }
 
     }
@@ -145,7 +250,7 @@ const deleteOne = (Model) =>
                 }
             );
         } catch (e) {
-            logger.error(`Error in deleteOne() function`)
+            logger.error(`Error in deleteOne() function: ${e}`)
             return res.status(400).json({
                 message: req.t("ERROR.BAD_REQUEST")
             });
@@ -155,7 +260,7 @@ const deleteOne = (Model) =>
 
 const getEmployeeThing = (Model) =>
     async (req, res) => {
-        // const userId = req.user.id;
+
         const userId = getCurrentUserId(req, res);
         var aggregation = aggregationWithFacet(req, res);
 
@@ -166,6 +271,62 @@ const getEmployeeThing = (Model) =>
                     enabled: true
                 }
             })
+            let query = []
+
+            var filterValue = ''
+            if (req.query?.filter) {
+                filterValue = req.query.filter
+                console.log(filterValue)
+
+                switch (Model) {
+                    case Interview:
+                        query = [
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { title: { $regex: filterValue, $options: 'i' } },
+                        ]
+                        break;
+                    case Contract:
+                        query = [
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { contractType: { $regex: filterValue, $options: 'i' } },
+                            { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        ]
+                    case File:
+                        query = [
+                            { userRef: { $regex: filterValue, $options: 'i' } },
+                            { 'profile.fullname': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.phone': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.address': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.position': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.departement': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.proEmail': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.workFrom': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.seniorityLevel': { $regex: filterValue, $options: 'i' } },
+
+
+                        ]
+                    case TimeOff:
+                        query = [
+                            { ref: { $regex: filterValue, $options: 'i' } },
+                            { status: { $regex: filterValue, $options: 'i' } },
+                            { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                            { 'startDateSpecs.from': { $regex: filterValue, $options: 'i' } },
+                            { 'endDateSpecs.to': { $regex: filterValue, $options: 'i' } },
+
+                        ]
+                    default:
+                        break;
+                }
+
+                aggregation.unshift(
+                    {
+                        $match: {
+                            $or: query
+                        }
+                    }
+                )
+            }
+
             logger.info("Entered Get Employee" + Model.modelName);
 
             // const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
