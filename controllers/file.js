@@ -118,8 +118,8 @@ module.exports.getCollaborators = async (req, res) => {
 module.exports.updateEmployeeFileDetails = async (req, res) => {
     const allowed_updates = ['phone', 'address', 'proEmail', 'description', 'fullname']
     const userId = getCurrentUserId(req, res);
-
-    logger.info("$$$$$ req body : ", req.body, "$$$$$")
+    const fileId = req.params.fileId
+    // logger.info("$$$$$ req body : ", req.body, "$$$$$")
     var query = {};
     try {
 
@@ -131,7 +131,8 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
             }
         }
         logger.info("$$$$ Query:", query)
-        const object = await File.updateOne({ userId: mongoose.Types.ObjectId(userId) }, { $set: query });
+        // const object = await File.updateOne({ userId: mongoose.Types.ObjectId(userId) }, { $set: query });
+        const object = await File.findByIdAndUpdate({ _id: fileId }, { $set: query });
         logger.info('found object! : ', object)
         if (!object) return res.sendStatus(404);
         logger.info('saved object! : ', object)
@@ -151,7 +152,6 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 module.exports.updateEmployeeFileAsAdmin = async (req, res) => {
     const file_id = req.params.file_id;
     const { _id, createdAt, updatedAt, ...profile_fields } = req.body.profile
-
     if (req.body?.timeOffBalance < 0 || req.body?.timeOffBalance > 30) {
         return res.status(400).json({ message: "Timeoff Balance should be in 0 .. 30 ." })
     }
@@ -168,7 +168,9 @@ module.exports.updateEmployeeFileAsAdmin = async (req, res) => {
             }
         }
         console.log("\n\n\n Query:", query)
-        const file = await File.updateOne({ _id: mongoose.Types.ObjectId(file_id) }, { $set: query });
+        // const file = await File.updateOne({ _id: mongoose.Types.ObjectId(file_id) }, { $set: query });
+        const file = await File.findByIdAndUpdate({ _id: file_id }, { $set: query });
+
         logger.info('found file! : ', file)
         if (!file) return res.sendStatus(404);
         logger.info('saved file! : ', file)
