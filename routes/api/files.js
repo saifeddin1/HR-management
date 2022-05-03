@@ -6,7 +6,7 @@ router.get('/getAllWithQueries', fileController.getAllFilesWithQuries);
 router.get('/employeeFileDetails', fileController.getEmployeeFileDetails);
 router.get('/getOneByUserId/:userId', fileController.getOneByUserId);
 router.get('/getCollaborators', fileController.getCollaborators);
-router.put('/employeeFileDetails', fileController.updateEmployeeFileDetails);
+router.put('/employeeFileDetails/:fileId', fileController.updateEmployeeFileDetails);
 router.put('/employeeFileAsAdmin/:file_id', fileController.updateEmployeeFileAsAdmin);
 router.delete('/employeeFileDetails', fileController.deleteEmployeeFileDetails);
 
