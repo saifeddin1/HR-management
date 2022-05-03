@@ -6,6 +6,7 @@ const mongoose = require('mongoose')
 const { matchQuery } = require('../utils/matchQuery');
 const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
+const kafka = require("../utils/producer");
 
 
 // module.exports.getAllFiles = factory.getAll(File);
@@ -135,11 +136,13 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
         logger.info('found object! : ', object)
         if (!object) return res.sendStatus(404);
         logger.info('saved object! : ', object)
+        kafka.updateUser(object)
         return res.json(
             {
                 response: object,
                 message: req.t("SUCCESS.EDITED")
-            }
+            },
+        
         );
 
     } catch (e) {
@@ -172,12 +175,14 @@ module.exports.updateEmployeeFileAsAdmin = async (req, res) => {
         logger.info('found file! : ', file)
         if (!file) return res.sendStatus(404);
         logger.info('saved file! : ', file)
+        kafka.updateUser(file)
+
         return res.json(
             {
                 response: file,
                 message: req.t("SUCCESS.EDITED")
             }
-        );
+        )
 
     } catch (e) {
         logger.error(`Error in updateEmployeeFileAsAdmin() function: ${e.message}`)
