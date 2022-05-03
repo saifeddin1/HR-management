@@ -7,26 +7,25 @@ const { Schema } = mongoose;
 
 const profileSchema = Schema(
     {
-        fullname: String,
-        // jobType: {
-        //     type: String,
-        //     enum: ["Full-Time", "Part-Time", "Contract", "Internship"]
-        // },
+        fullname: { type: String, maxLength: 200 },
+
         workFrom: {
             type: String,
+            maxLength: 200,
             enum: ["On-Site", "Remote", "Hybrid"]
         },
         seniorityLevel: {
             type: String,
+            maxLength: 200,
             enum: ["Junior", "Senior", "Consultant"]
         },
         phone: Number,
-        address: String,
-        position: String,
-        departement: String,
-        proEmail: { type: String, required: false },
-        image: String,
-        description: String
+        address: { type: String, maxLength: 200 },
+        position: { type: String, maxLength: 200 },
+        departement: { type: String, maxLength: 200 },
+        proEmail: { type: String, maxLength: 200, match: [/.+\@.+\..+/, "Valid email required"], },
+        image: { type: String, maxLength: 200 },
+        description: { type: String, maxLength: 400 }
 
     },
     { timestamps: true }

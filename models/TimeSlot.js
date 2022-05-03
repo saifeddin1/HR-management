@@ -7,7 +7,7 @@ const timeSlotSchema = Schema(
     {
         start: Date,
         end: Date,
-        description: String,
+        description: { type: String, maxLength: 200 },
         enabled: {
             type: Boolean,
             default: true,

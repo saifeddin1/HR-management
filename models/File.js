@@ -6,7 +6,7 @@ const { Schema } = mongoose;
 
 const fileSchema = Schema(
     {
-        userRef: String,
+        userRef: { type: String, maxLength: 100 },
         userId: {
             type: mongoose.Schema.Types.ObjectId
         },

@@ -15,7 +15,7 @@ const timeSheetSchema = Schema(
         },
         workingHours: Number,
         extraHours: { type: Number, default: 0 },
-        note: String,
+        note: { type: String, maxLength: 200 },
         isDayOff: { type: Boolean, default: false },
         enabled: {
             type: Boolean,

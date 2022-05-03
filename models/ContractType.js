@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 const ContractTypeSchema = Schema(
     {
         title: {
-            type: String,
+            type: String, maxLength: 200,
             required: "This Field is Required"
         },
         enabled: {

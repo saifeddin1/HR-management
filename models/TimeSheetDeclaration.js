@@ -18,6 +18,7 @@ const TimeSheetDeclarationSchema = Schema(
         },
         status: {
             type: String,
+            maxLength: 200,
             enum: ["declared", "approved", "rejected"],
             default: "declared",
         },
@@ -29,16 +30,6 @@ const TimeSheetDeclarationSchema = Schema(
     },
     { timestamps: true }
 );
-
-
-// TimeSheetDeclarationSchema.pre('save', async function (next) {
-//     if (this.status === "Declared") {
-//         next(new Error('Cannot update active declarations'));
-//     } else {
-//         next();
-//     }
-// })
-
 
 
 const TimeSheetDeclaration = mongoose.model('TimeSheetDeclaration', TimeSheetDeclarationSchema);

@@ -10,13 +10,14 @@ const timeOffSchema = Schema(
             type: mongoose.Schema.Types.ObjectId
         },
         ref: {
-            type: String,
+            type: String, maxLength: 200,
             default: `Timeoff-${makeRef(3)}`
         },
         startDateSpecs: {
             date: Date,
             from: {
                 type: String,
+                maxLength: 200,
                 enum: { values: ['morning', 'afternoon'], message: "{VALUE} is not supported, try : morning or afternoon" }
             }
         },
@@ -24,11 +25,13 @@ const timeOffSchema = Schema(
             date: Date,
             to: {
                 type: String,
+                maxLength: 200,
                 enum: { values: ['morning', 'afternoon'], message: "{VALUE} is not supported, try : morning or afternoon" }
             }
         },
         status: {
             type: String,
+            maxLength: 200,
             default: "Pending",
             enum: { values: ['Pending', 'Approved', 'Rejected'], message: "{VALUE} is not supported. Value should be in ['Pending', 'Approved', 'Rejected'] " }
         },
@@ -40,12 +43,6 @@ const timeOffSchema = Schema(
     { timestamps: true }
 );
 
-// timeOffSchema.methods.toJSON = function () {
-//     var obj = this.toObject()
-//     delete obj.file
-//     delete obj.status
-//     return obj
-// }
 
 const TimeOff = mongoose.model('TimeOff', timeOffSchema);
 

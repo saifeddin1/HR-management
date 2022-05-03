@@ -151,6 +151,12 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 module.exports.updateEmployeeFileAsAdmin = async (req, res) => {
     const file_id = req.params.file_id;
     const { _id, createdAt, updatedAt, ...profile_fields } = req.body.profile
+
+    if (req.body?.timeOffBalance < 0 || req.body?.timeOffBalance > 30) {
+        return res.status(400).json({ message: "Timeoff Balance should be in 0 .. 30 ." })
+    }
+
+
     var query = { userRef: req.body.userRef, timeOffBalance: req.body.timeOffBalance };
     console.log("\n\n\n req body:", req.body)
     try {
@@ -321,7 +327,7 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
         // const object = await File.aggregate(aggregation).deleteOne();
         const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
         logger.info(object);
-        object.enabled ? object.enabled = false : res.status(403).json({ message: req.t("ERROR.FORBIDDEN") });
+        object.enabled ? object.enabled = false : res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
         object.save();
         return !object ? res.send(404) : res.json(
             {

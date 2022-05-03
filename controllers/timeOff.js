@@ -119,7 +119,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(403).json({ message: req.t("ERROR.FORBIDDEN") });
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
 
 
     try {
@@ -128,7 +128,7 @@ module.exports.updateEmployeeTimeoff = async (req, res) => {
 
         const timeOff = await TimeOff.findOne({ userId: mongoose.Types.ObjectId(userId), _id: timeOffId });
         if (!timeOff) return res.sendStatus(404);
-        if (!(timeOff.status === "Pending")) return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
+        if (!(timeOff.status === "Pending")) return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
         updates.forEach(update => {
             timeOff[update] = req.body[update];
         });
@@ -166,25 +166,46 @@ module.exports.createTimeOffAsEmployee = async (req, res) => {
     });
 
     if (!isValidOperation)
-        return res.status(401).json({ message: req.t("ERROR.FORBIDDEN") });
+        return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
+
+    if (new Date(req.body.startDateSpecs?.date) < new Date()) {
+        return res.status(400).json({ message: "Start Date can't be in the past." });
+    }
+
+    if (new Date(req.body.startDateSpecs?.date) > new Date(req.body.endDateSpecs.date)) {
+        return res.status(400).json({ message: "End Date sould come after  Start Date." });
+    }
+
+    let offDays = new Date(req.body.endDateSpecs.date).getDate() - new Date(req.body.startDateSpecs.date).getDate()
+    console.log("\n⚡ ~   module.exports.createTimeOffAsEmployee= ~ offDays", offDays)
+
+    const userFile = await File.findOne({ userId: userId });
+    console.log("\n", userFile);
+
+    if (offDays > userFile.timeOffBalance) {
+        return res.status(400).json({ message: "You Timeoff balance is very low." })
+    }
+    userFile.timeOffBalance -= offDays;
+    await userFile.save()
+    console.log("\n⚡timeOffBalance after", userFile.timeOffBalance)
 
     const timeOffRequest = new TimeOff();
     inputFields.forEach(input => {
-        // if (new Date(req.body['startDate']) < new Date() || (req.body['offDays'] < 1 || req.body['offDays'] > 22)) return res.status(400).json({ message: req.t("ERROR.FORBIDDEN") });
         timeOffRequest[input] = req.body[input];
     });
 
     timeOffRequest.userId = mongoose.Types.ObjectId(userId);
-    logger.info('created timoff! : ', timeOffRequest)
-    const existingTimeoff = await TimeOff.findOne({ startDateSpecs: timeOffRequest.startDateSpecs, endDateSpecs: timeOffRequest.endDateSpecs, enabled: true })
-    if (existingTimeoff) {
+    // logger.info('created timoff! : ', timeOffRequest)
+    const existingTimeoff = await TimeOff.findOne({ userId: userId, startDateSpecs: timeOffRequest.startDateSpecs, endDateSpecs: timeOffRequest.endDateSpecs, enabled: true })
+    const pendingTimeoff = await TimeOff.findOne({ userId: userId, status: 'Pending' })
+    // console.log(pendingTimeoff);
+    if (existingTimeoff || pendingTimeoff) {
         res.status(409).json({ message: req.t("ERROR.ALREADY_EXISTS") });
     } else {
 
         try {
 
             await timeOffRequest.save();
-            // const userFile = await File.updateOne({ userId: userId }, { $inc: { timeOffBalance: -req.body['offDays'] } });
 
             // logger.info("⚡  userFile after substraction: ", userFile)
             logger.info("Saved ");

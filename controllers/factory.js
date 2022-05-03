@@ -158,6 +158,12 @@ const createOne = (Model) =>
                     })
                 }
             }
+            if (Model == File) {
+                if (req.body?.timeOffBalance < 0 || req.body?.timeOffBalance > 30) {
+                    return res.status(400).json({ message: "Timeoff Balance should be in 0 .. 30 ." })
+                }
+
+            }
             await object.save();
             logger.info("Saved :", object);
             res.status(201).json(
@@ -188,7 +194,16 @@ const updateOne = (Model) =>
             });
 
 
-
+            if (Model == File) {
+                if (req.body?.timeOffBalance < 0 || req.body?.timeOffBalance > 30) {
+                    return res.status(400).json({ message: "Timeoff Balance should be in 0 .. 30 ." })
+                }
+            }
+            // if (Model === TimeOff) {
+            //     if (new Date(req.body.startDateSpecs?.date) < new Date()) {
+            //         return res.status(401).json({ message: "Start Date can't be in the past." });
+            //     }
+            // }
             await object.save();
 
             if (Model === TimeOff && object.status === 'Approved') {
@@ -215,7 +230,7 @@ const updateOne = (Model) =>
 
         } catch (e) {
             logger.error(`Error in updateOne() function : ${e}`)
-            return res.status(403).json({ message: req.t("ERROR.UNAUTHORIZED") });
+            return res.status(401).json({ message: req.t("ERROR.UNAUTHORIZED") });
         }
 
     }
