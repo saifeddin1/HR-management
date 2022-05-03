@@ -23,7 +23,7 @@ const kafka = new Kafka({
   brokers: ['localhost:9092', 'localhost:9092']
 })
 
-const consumer = kafka.consumer({ groupId: 'kafka3' })
+const consumer = kafka.consumer({ groupId: 'kafka4' })
 
 
 const run = async (req, res) => {
