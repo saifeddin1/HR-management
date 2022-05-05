@@ -7,6 +7,7 @@ const { TimeOff } = require('../models/TimeOff');
 const { Contract } = require('../models/Contract');
 const { Interview } = require('../models/Interview');
 const File = require('../models/File');
+const YearMonth = require('../models/YearMonth');
 
 
 const getAll = (Model) =>
@@ -201,9 +202,45 @@ const updateOne = (Model) =>
             }
             // if (Model === TimeOff) {
             //     if (new Date(req.body.startDateSpecs?.date) < new Date()) {
-            //         return res.status(401).json({ message: "Start Date can't be in the past." });
+            //         return res.status(400).json({ message: "Start Date can't be in the past." });
             //     }
             // }
+            if (Model === YearMonth) {
+
+                const existingYearMonth = await YearMonth.findOne({ title: req.body.title, enabled: true })
+                if (existingYearMonth) {
+                    return res.status(400).json({ message: "Year-Month Combination already exists." })
+                }
+
+                const { title } = req.body
+                if (title?.length < 6 || title?.length > 7 || title.split('-').length !== 2) return res.status(400).json({
+                    message: req.t("ERROR.BAD_REQUEST")
+                })
+
+                var year = title.split('-')[0]
+                var month = title.split('-')[1]
+
+                if (month === "00" || month === "0") return res.status(400).json({
+                    message: req.t("ERROR.BAD_REQUEST")
+                })
+
+                var months = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+                if (months.includes(month)) {
+                    month = "0" + month
+                }
+                // change 2000 to the company creation year for example 
+                /// and 2022 for the current year 
+
+
+                if (year.length !== 4 || year < "2000" || year > "2022" || month > "12" || month === "0") {
+
+                    return res.status(400).json({
+                        message: req.t("ERROR.BAD_REQUEST")
+                    })
+
+                }
+            }
             await object.save();
 
             if (Model === TimeOff && object.status === 'Approved') {
@@ -230,7 +267,7 @@ const updateOne = (Model) =>
 
         } catch (e) {
             logger.error(`Error in updateOne() function : ${e}`)
-            return res.status(401).json({ message: req.t("ERROR.UNAUTHORIZED") });
+            return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
         }
 
     }

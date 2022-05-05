@@ -36,7 +36,7 @@ const run = async (req, res) => {
           const response = await File.updateOne({ "userId": ObjectId(obj._id) }, {
             $set: {
               ...obj, userRef: `${obj?.type}-${makeRef(3)}`, profile: {
-                fullname: obj.username, proEmail: obj.email
+                fullname: `${obj.firstname} ${obj.lastname}`, proEmail: obj.email
               }
             }
           }, { upsert: true })

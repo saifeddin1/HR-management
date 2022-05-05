@@ -302,12 +302,51 @@ module.exports.getTimesheetsByUserId = async (req, res) => {
                 }
             }
         })
+
+
         aggregation.unshift({
             '$match': {
-
                 enabled: true
             }
-        })
+        },
+            {
+                '$lookup': {
+                    'from': 'files',
+                    'let': {
+                        'tsheetUserId': '$userId' // Id of the current file
+                    },
+                    // 'localField': '_id',
+                    'pipeline': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$and': [
+                                        {
+                                            '$eq': [
+                                                '$userId', '$$tsheetUserId'
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            '$project': {
+                                userRef: 1,
+
+                            }
+                        }
+                    ],
+                    'as': 'user'
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$user"
+                }
+            }
+
+        )
 
 
         // const employeeWith = await Model.find({ userId: mongoose.Types.ObjectId(userId) });
