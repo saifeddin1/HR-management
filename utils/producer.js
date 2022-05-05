@@ -14,6 +14,7 @@ const producer = kafka.producer();
 
   
   // Producing
+   console.log("u*********************** sent %%%%%%****** ",res)
    console.log("update file ******",res)
    try{
 
