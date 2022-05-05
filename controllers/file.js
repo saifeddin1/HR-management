@@ -183,7 +183,7 @@ module.exports.updateEmployeeFileAsAdmin = async (req, res) => {
         // logger.info('found file! : ', file)
         if (!file) return res.sendStatus(404);
         // logger.info('saved file! : ', file)
-        kafka.updateUser(object)
+        kafka.updateUser(file)
         return res.json(
             {
                 response: file,

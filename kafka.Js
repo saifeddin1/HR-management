@@ -28,24 +28,24 @@ const run = async (req, res) => {
 
       console.log("****************** Arrived in HR ******************")
       const obj = JSON.parse(message.value);
+      console.log(obj);
 
       try {
-        console.log(obj);
 
-        if (obj?.type && obj.type !== "ESTUDENT"){
-         const response = await File.updateOne({ "userId": ObjectId(obj._id) }, {
-          $set: {
-            ...obj, userRef: `${obj?.type}-${makeRef(3)}`, profile: {
-              fullname: obj.username, proEmail: obj.email
+        if (obj?.type && obj.type !== "ESTUDENT") {
+          const response = await File.updateOne({ "userId": ObjectId(obj._id) }, {
+            $set: {
+              ...obj, userRef: `${obj?.type}-${makeRef(3)}`, profile: {
+                fullname: obj.username, proEmail: obj.email
+              }
             }
-          }
-         }, { upsert: true })
-         logger.info(response)
+          }, { upsert: true })
+          logger.info(response)
 
-        if (response) {
-          logger.info("Executing wihout problems")
+          if (response) {
+            logger.info("Executing wihout problems")
+          }
         }
-      }
         else {
           logger.info('Something went wrong')
         }
