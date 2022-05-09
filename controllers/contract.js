@@ -232,7 +232,7 @@ module.exports.getActiveContract = async (req, res) => {
     const userId = getCurrentUserId(req, res);
 
     try {
-        const activeContract = await Contract.find({ userId: userId, status: 'active', enabled: true })
+        const activeContract = await Contract.findOne({ userId: userId, status: 'active', enabled: true })
         return !activeContract
             ? res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             : res.status(200).json(

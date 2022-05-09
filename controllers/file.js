@@ -7,8 +7,95 @@ const { matchQuery } = require('../utils/matchQuery');
 const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
 const kafka = require('../utils/producer');
+const fs = require('fs')
+let gfs;
+const { connection } = require('../config/mongoose');
+connection.once("open", () => {
+    // init stream
+    console.log("*** File CONTROLLER ***")
+    gfs = new mongoose.mongo.GridFSBucket(connection.db, {
+        bucketName: "profile_uploads",
+    });
+    console.log("***after  ***")
 
-// module.exports.getAllFiles = factory.getAll(File);
+});
+
+module.exports.uploadProfileImg = async (req, res) => {
+    console.log("****** img upload *********", req.file);
+    const userId = getCurrentUserId(req, res)
+    try {
+
+        try {
+
+            const userFile = await File.findOne({ userId: userId })
+
+            console.log(userFile);
+            console.log("req.file.id :", req.file.id);
+            if (userFile.profile.image === "") userFile.profile.image = req.file.id;
+            else {
+                console.log("delete section");
+                gfs.delete(userFile.profile.image, (err, data) => {
+                    if (err) {
+                        console.log("delete section error :", JSON.stringify(err.message));
+                    }
+                });
+                userFile.profile.image = req.file.id;
+
+            }
+            try {
+
+                const savedDoc = await userFile.save()
+                res.status(200).json(savedDoc)
+            }
+            catch (err) {
+                res.json(err);
+            }
+        }
+        catch (err) {
+            res.status(400).json(`Error finding file: ${err}`);
+        }
+    }
+    catch (error) {
+        console.error("Method : uploadImage Error :", error);
+    }
+}
+
+module.exports.findImgById = async (req, res) => {
+    console.log(gfs);
+    gfs.find({
+        _id: mongoose.Types.ObjectId(req.params.id),
+    })
+        .toArray((err, files) => {
+            if (!files || files.length === 0) {
+                return res.status(404).json({
+                    err: "no files exist",
+                });
+            }
+            gfs.openDownloadStream(mongoose.Types.ObjectId(req.params.id)).pipe(res);
+            // var readstream = gfs.createReadStream({
+            //     filename: files[0].filename,
+            //     root: "profile_uploads"
+            // });
+            // // set the proper content type 
+            // res.set('Content-Type', files[0].contentType)
+            // // Return response
+            // return readstream.pipe(res);
+
+        });
+};
+
+
+
+
+
+
+
+
+
+
+
+
+// module.exports.getAllFile = factory.getAll(File);
 module.exports.getOneFile = factory.getOne(File);
 module.exports.createNewFile = factory.createOne(File);
 module.exports.updateFile = factory.updateOne(File);
@@ -435,3 +522,4 @@ module.exports.getOneByUserId = async (req, res) => {
     }
 
 }
+
