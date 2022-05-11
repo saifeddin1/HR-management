@@ -19,8 +19,14 @@ const TimeSheetDeclarationSchema = Schema(
         status: {
             type: String,
             maxLength: 200,
-            enum: ["declared", "approved", "rejected"],
+            enum: { values: ["declared", "approved", "rejected"], message: "{VALUE} is not supported" },
             default: "declared",
+        },
+        declaredHours: {
+            type: Number
+        },
+        extraHours: {
+            type: Number
         },
         enabled: {
             type: Boolean,

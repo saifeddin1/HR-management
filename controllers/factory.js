@@ -8,6 +8,7 @@ const { Contract } = require('../models/Contract');
 const { Interview } = require('../models/Interview');
 const File = require('../models/File');
 const YearMonth = require('../models/YearMonth');
+const { TimeSheetDeclaration } = require('../models/TimeSheetDeclaration');
 
 
 const getAll = (Model) =>
@@ -60,6 +61,7 @@ const getAll = (Model) =>
                             { 'startDateSpecs.from': { $regex: filterValue, $options: 'i' } },
                             { 'endDateSpecs.to': { $regex: filterValue, $options: 'i' } },
                         ]
+
                     default:
                         break;
                 }
@@ -72,8 +74,6 @@ const getAll = (Model) =>
                     }
                 )
             }
-
-            console.log(Model)
             const objects = await Model.aggregate(aggregation)
             if (!objects || !objects.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
             res.status(200).json({
@@ -156,6 +156,21 @@ const createOne = (Model) =>
                     console.log(' Date in the past ☣️');
                     return res.status(400).json({
                         message: "Date can't be in the past."
+                    })
+                }
+            }
+            if (Model === TimeSheetDeclaration) {
+                const exists = await TimeSheetDeclaration
+                    .findOne({
+                        userId: req.body.userId,
+                        month: req.body.month,
+                        status: 'declared',
+                        enabled: true
+                    })
+                console.log(exists);
+                if (exists) {
+                    return res.status(400).json({
+                        message: "Current Month Have Already Been Declared."
                     })
                 }
             }

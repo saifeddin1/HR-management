@@ -249,7 +249,7 @@ module.exports.getMonthlyEmployeeTimesheets = async (req, res) => {
             message: req.t('SUCCESS.RETRIEVED')
         })
     } catch (error) {
-        logger.debug(JSON.stringify(e))
+        logger.debug(JSON.stringify(error))
         return res.status(400).json({
             message: req.t("ERROR.BAD_REQUEST")
 
