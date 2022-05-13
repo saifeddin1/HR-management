@@ -73,7 +73,7 @@ app.listen(port, () => {
 
 
 
-// const run = require('./kafka')
+const run = require('./kafka')
 
 
-// run().catch(console.error)
+run().catch(console.error)
