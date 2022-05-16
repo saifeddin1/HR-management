@@ -178,6 +178,74 @@ module.exports.getAllContractsWithSalaries = async (req, res) => {
     }
 }
 
+module.exports.getAllActiveContracts = async (req, res) => {
+
+    let aggregation = aggregationWithFacet(req, res)
+
+    aggregation.unshift(
+        {
+            '$lookup': {
+                'from': 'files',
+                'let': {
+                    'contractUserId': '$userId' // Id of the current file
+                },
+                // 'localField': '_id',
+                'pipeline': [
+                    {
+                        '$match': {
+                            '$expr': {
+                                '$and': [
+                                    {
+                                        '$eq': [
+                                            '$userId', '$$contractUserId'
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        '$project': {
+                            userRef: 1,
+                            profile: {
+                                fullname: 1
+                            }
+                        }
+                    }
+                ],
+                'as': 'user'
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$user"
+            }
+        },
+        {
+            '$match': {
+                enabled: true, status: "active"
+            }
+        }
+    )
+
+    try {
+        const allActive = await Contract.aggregate(aggregation)
+        return (allActive && allActive.length)
+            ? res.status(200).json({
+                response: allActive,
+                message: req.t("SUCCESS.RETRIEVED")
+            })
+            : res.status(404).json({
+                message: req.t("ERROR.NOT_FOUND")
+            })
+    } catch (error) {
+        logger.error(`Erroor in allactive =>${error.message}`);
+        return res.status(400).json({
+            message: req.t("ERROR.BAD_REQUEST")
+        })
+    }
+}
+
 module.exports.updateContractWithSalaries = async (req, res) => {
     const { salary, ...contractFields } = req.body
     const { _id, createdAt, updatedAt, ...salaryFields } = salary
@@ -244,7 +312,7 @@ module.exports.getActiveContract = async (req, res) => {
             );
     }
     catch (e) {
-        logger.error(`Error in getActiveContract() function: `, e.message)
+        logger.error(`Error in getActiveContract() function: ${e}`)
         return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") })
     }
 }
