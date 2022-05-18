@@ -7,12 +7,13 @@ const timetableSchema = Schema(
     {
         day: {
             type: String,
+            maxLength: 200,
             enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
         },
         startedAt: Date,
         endedAt: Date,
-        title: String,
-        description: String,
+        title: { type: String, maxLength: 200 },
+        description: { type: String, maxLength: 200 },
         enabled: {
             type: Boolean,
             default: true,

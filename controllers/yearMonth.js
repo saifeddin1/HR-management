@@ -2,7 +2,8 @@ const YearMonth = require('../models/YearMonth');
 const { TimeSheet } = require('../models/TimeSheet');
 
 const factory = require('./factory');
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const { Contract } = require('../models/Contract');
 
 
 module.exports.getAllYearMonths = factory.getAll(YearMonth);
@@ -16,7 +17,7 @@ function daysInMonth(month, year) {
 }
 
 module.exports.createNewYearMonth = async (req, res) => {
-    const { userId } = req.params
+
     console.log("\n**** ", req.body, " *********\n");
     const { title } = req.body
     if (title?.length < 6 || title?.length > 7 || title.split('-').length !== 2) return res.status(400).json({
@@ -38,39 +39,29 @@ module.exports.createNewYearMonth = async (req, res) => {
     // change 2000 to the company creation year for example 
     /// and 2022 for the current year 
 
+
     if (year.length !== 4 || year < "2000" || year > "2022" || month > "12" || month === "0") return res.status(400).json({
         message: req.t("ERROR.BAD_REQUEST")
     })
 
-    let daysCount = daysInMonth(month, year);
+
     const newYearMonth = new YearMonth({ title: `${year}-${month}` });
     console.log("newYearMonth :", newYearMonth);
-    const existingYearMonth = await YearMonth.find({ title: newYearMonth.title })
-    try {
-        if (!existingYearMonth || !existingYearMonth.length) {
-            await newYearMonth.save()
-        }
-        var timesheets = []
-        for (var i = 0; i < daysCount; i++) {
-            timesheets.push(await TimeSheet.create({
-                userId: mongoose.Types.ObjectId(userId),
-                date: new Date(year, month - 1, i + 1),
-                workingHours: 0,
-                note: ''
-            }))
-        }
+    const existingYearMonth = await YearMonth.findOne({ title: newYearMonth.title, enabled: true })
+    if (existingYearMonth) {
+        return res.status(400).json({ message: "Yearmonth combination already exists." })
+    }
 
+    try {
+        await newYearMonth.save()
 
         console.log("Saved :", {
             newYearMonth: newYearMonth,
-            timesheets: timesheets
+
         });
         res.status(201).json(
             {
-                response: {
-                    newYearMonth: newYearMonth,
-                    timesheets: timesheets
-                },
+                response: newYearMonth,
                 message: req.t("SUCCESS.CREATED")
             }
         )
@@ -83,6 +74,51 @@ module.exports.createNewYearMonth = async (req, res) => {
     }
 }
 
+
+module.exports.generateTimesheets = async (req, res) => {
+    const userId = req.params.userId
+    const yearMonth = req.body.title
+
+    let year = yearMonth.split('-')[0]
+
+    let month = yearMonth.split('-')[1]
+
+    let currentContract = await Contract.findOne({ userId: userId })
+    console.log("⚡ ~ currentContract", currentContract)
+    let daysCount = daysInMonth(month, year);
+
+    try {
+        var timesheets = []
+        if (currentContract.timesheetType === 'ADMINISTRATIVE') {
+            console.log('Administrative, generating .....');
+            for (var i = 0; i < daysCount; i++) {
+                timesheets.push(await TimeSheet.create({
+                    userId: mongoose.Types.ObjectId(userId),
+                    date: new Date(year, month - 1, i + 1),
+                    workingHours: 0,
+                    note: ''
+                }))
+            }
+            return res.status(201).json({
+                response: timesheets,
+                message: req.t("SUCCESS.CREATED")
+            })
+        }
+        else {
+            console.log('Non Administrative, aborting .....');
+            return res.status(400).json({
+                response: [],
+                message: "Not Administrative Employee."
+            })
+        }
+
+    } catch (e) {
+        console.log(`Error in createOne() function: ${e.message}`)
+        return res.status(400).json({
+            message: req.t("ERROR.BAD_REQUEST")
+        })
+    }
+}
 // module.exports.getDistinctYearMonths = async (req, res) => {
 //     try {
 //         var yearMonthItems;

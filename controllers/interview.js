@@ -33,7 +33,7 @@ module.exports.getAllInterviews = async (req, res) => {
                     $or: [
                         { status: { $regex: filterValue, $options: 'i' } },
                         { title: { $regex: filterValue, $options: 'i' } },
-
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
                     ]
                 }
             }
@@ -189,7 +189,7 @@ module.exports.getInterviewsByUserId = async (req, res) => {
                         $or: [
                             { status: { $regex: filterValue, $options: 'i' } },
                             { title: { $regex: filterValue, $options: 'i' } },
-
+                            { 'user.userRef': { $regex: filterValue, $options: 'i' } },
                         ]
                     }
                 }

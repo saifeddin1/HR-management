@@ -6,13 +6,153 @@ const mongoose = require('mongoose')
 const { matchQuery } = require('../utils/matchQuery');
 const { aggregationWithFacet } = require('../utils/aggregationWithFacet');
 const { getCurrentUserId } = require('../utils/getCurrentUser');
+const kafka = require('../utils/producer');
+const fs = require('fs')
+let gfs;
+const { connection } = require('../config/mongoose');
+connection.once("open", () => {
+    // init stream
+    console.log("*** File CONTROLLER ***")
+    gfs = new mongoose.mongo.GridFSBucket(connection.db, {
+        bucketName: "profile_uploads",
+    });
+    console.log("***after  ***")
+
+});
+
+module.exports.uploadProfileImg = async (req, res) => {
+    console.log("****** img upload *********", req.file);
+    const userId = getCurrentUserId(req, res)
+    try {
+
+        try {
+
+            const userFile = await File.findOne({ userId: userId })
+
+            console.log(userFile);
+            console.log("req.file.id :", req.file.id);
+            if (userFile.profile.image === "") userFile.profile.image = req.file.id;
+            else {
+                console.log("delete section");
+                gfs.delete(userFile.profile.image, (err, data) => {
+                    if (err) {
+                        console.log("delete section error :", JSON.stringify(err.message));
+                    }
+                });
+                userFile.profile.image = req.file.id;
+
+            }
+            try {
+
+                const savedDoc = await userFile.save()
+                res.status(200).json(savedDoc)
+            }
+            catch (err) {
+                res.json(err);
+            }
+        }
+        catch (err) {
+            res.status(400).json(`Error finding file: ${err}`);
+        }
+    }
+    catch (error) {
+        console.error("Method : uploadImage Error :", error);
+    }
+}
+
+module.exports.findImgById = async (req, res) => {
+    console.log(gfs);
+    gfs.find({
+        _id: mongoose.Types.ObjectId(req.params.id),
+    })
+        .toArray((err, files) => {
+            if (!files || files.length === 0) {
+                return res.status(404).json({
+                    err: "no files exist",
+                });
+            }
+            gfs.openDownloadStream(mongoose.Types.ObjectId(req.params.id)).pipe(res);
+            // var readstream = gfs.createReadStream({
+            //     filename: files[0].filename,
+            //     root: "profile_uploads"
+            // });
+            // // set the proper content type 
+            // res.set('Content-Type', files[0].contentType)
+            // // Return response
+            // return readstream.pipe(res);
+
+        });
+};
 
 
-module.exports.getAllFiles = factory.getAll(File);
+
+
+
+
+
+
+
+
+
+
+// module.exports.getAllFile = factory.getAll(File);
 module.exports.getOneFile = factory.getOne(File);
 module.exports.createNewFile = factory.createOne(File);
 module.exports.updateFile = factory.updateOne(File);
 module.exports.deleteFile = factory.deleteOne(File);
+
+
+module.exports.getAllFiles =
+    async (req, res) => {
+
+        let filterValue = ''
+        var aggregation = aggregationWithFacet(req, res);
+        aggregation.unshift({
+            $match: {
+                enabled: true
+            }
+        })
+
+        if (req.query?.filter) {
+            filterValue = req.query.filter
+            console.log(filterValue)
+            aggregation.unshift(
+                {
+                    $match: {
+                        $or: [
+                            { userRef: { $regex: filterValue, $options: 'i' } },
+
+
+                            { 'profile.fullname': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.phone': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.address': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.position': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.departement': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.proEmail': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.workFrom': { $regex: filterValue, $options: 'i' }, },
+                            { 'profile.seniorityLevel': { $regex: filterValue, $options: 'i' } },
+
+                        ]
+                    }
+                }
+            )
+        }
+        try {
+            const files = await File.aggregate(aggregation)
+            if (!files || !files.length) return res.status(404).json({ message: req.t("ERROR.NOT_FOUND") })
+            res.status(200).json({
+                response: files,
+                message: req.t("SUCCESS.RETRIEVED")
+            })
+        } catch (e) {
+            logger.error(`Error in getAllFiles() function`, e)
+            return res.status(400).json({
+                message: req.t("ERROR.BAD_REQUEST")
+            });
+        }
+
+
+    }
 
 
 // same as getEmployees 
@@ -25,7 +165,15 @@ module.exports.getCollaborators = async (req, res) => {
     logger.info("req.userid", userId);
     var query = [
 
-        { userRef: { '$ne': userId }, enabled: true }
+        {
+            userRef: {
+
+                '$not': { '$regex': 'ESTUDENT', '$options': 'i' }
+
+            },
+            enabled: true,
+
+        }
     ]
     var ObjectId = require('mongoose').Types.ObjectId;
     if (typeof userId == "string" && ObjectId.isValid(userId)) {// userId is a valid objectId
@@ -65,8 +213,8 @@ module.exports.getCollaborators = async (req, res) => {
 module.exports.updateEmployeeFileDetails = async (req, res) => {
     const allowed_updates = ['phone', 'address', 'proEmail', 'description', 'fullname']
     const userId = getCurrentUserId(req, res);
-
-    logger.info("$$$$$ req body : ", req.body, "$$$$$")
+    const fileId = req.params.fileId
+    // logger.info("$$$$$ req body : ", req.body, "$$$$$")
     var query = {};
     try {
 
@@ -78,10 +226,12 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
             }
         }
         logger.info("$$$$ Query:", query)
-        const object = await File.updateOne({ userId: mongoose.Types.ObjectId(userId) }, { $set: query });
-        logger.info('found object! : ', object)
+        // const object = await File.updateOne({ userId: mongoose.Types.ObjectId(userId) }, { $set: query });
+        const object = await File.findByIdAndUpdate({ _id: fileId }, { $set: query });
+        // logger.info('found object! : ', object)
         if (!object) return res.sendStatus(404);
-        logger.info('saved object! : ', object)
+        // logger.info('saved object! : ', object)
+        kafka.updateUser(object)
         return res.json(
             {
                 response: object,
@@ -98,6 +248,11 @@ module.exports.updateEmployeeFileDetails = async (req, res) => {
 module.exports.updateEmployeeFileAsAdmin = async (req, res) => {
     const file_id = req.params.file_id;
     const { _id, createdAt, updatedAt, ...profile_fields } = req.body.profile
+    if (req.body?.timeOffBalance < 0 || req.body?.timeOffBalance > 30) {
+        return res.status(400).json({ message: "Timeoff Balance should be in 0 .. 30 ." })
+    }
+
+
     var query = { userRef: req.body.userRef, timeOffBalance: req.body.timeOffBalance };
     console.log("\n\n\n req body:", req.body)
     try {
@@ -109,10 +264,13 @@ module.exports.updateEmployeeFileAsAdmin = async (req, res) => {
             }
         }
         console.log("\n\n\n Query:", query)
-        const file = await File.updateOne({ _id: mongoose.Types.ObjectId(file_id) }, { $set: query });
-        logger.info('found file! : ', file)
+        // const file = await File.updateOne({ _id: mongoose.Types.ObjectId(file_id) }, { $set: query });
+        const file = await File.findByIdAndUpdate({ _id: file_id }, { $set: query });
+
+        // logger.info('found file! : ', file)
         if (!file) return res.sendStatus(404);
-        logger.info('saved file! : ', file)
+        // logger.info('saved file! : ', file)
+        kafka.updateUser(file)
         return res.json(
             {
                 response: file,
@@ -268,7 +426,7 @@ module.exports.deleteEmployeeFileDetails = async (req, res) => {
         // const object = await File.aggregate(aggregation).deleteOne();
         const object = await File.findOne({ userId: mongoose.Types.ObjectId(userId) });
         logger.info(object);
-        object.enabled ? object.enabled = false : res.status(403).json({ message: req.t("ERROR.FORBIDDEN") });
+        object.enabled ? object.enabled = false : res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") });
         object.save();
         return !object ? res.send(404) : res.json(
             {
@@ -364,3 +522,4 @@ module.exports.getOneByUserId = async (req, res) => {
     }
 
 }
+

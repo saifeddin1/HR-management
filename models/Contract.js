@@ -13,16 +13,16 @@ const ContractSchema = Schema(
         },
         status: {
             type: String,
-            enum: ['active', 'inactive'],
-            unique: true,
+            enum: { values: ['active', 'inactive'], message: "Value {VALUE} NOT SUPPORTED." },
             default: 'active'
         },
         timesheetType: {
             type: String,
+            maxLength: 200,
             enum: ['ADMINISTRATIVE', 'NON ADMINISTRATIVE'],
             // required: "This field is required"
         },
-        contractType: String,
+        contractType: { type: String, maxLength: 200 },
         hoursNumber: Number,
         startDate: Date,
         endDate: Date,

@@ -14,7 +14,7 @@ const kafka = new Kafka({
   brokers: ['localhost:9092', 'localhost:9092']
 })
 
-const consumer = kafka.consumer({ groupId: 'kafka3' })
+const consumer = kafka.consumer({ groupId: 'kafka4' })
 
 
 const run = async (req, res) => {
@@ -26,21 +26,25 @@ const run = async (req, res) => {
     eachMessage: async ({ topic, partition, message }) => {
 
 
-      console.log("****************** wsouuul mena zeda******************")
+      console.log("****************** Arrived in HR ******************")
       const obj = JSON.parse(message.value);
+      console.log(obj);
 
       try {
-        console.log(obj);
-        const response = await File.updateOne({ "userId": ObjectId(obj._id) }, {
-          $set: {
-            ...obj, userRef: `${obj?.type}-${makeRef(3)}`, profile: {
-              fullname: obj.username, proEmail: obj.email
+
+        if (obj?.type && obj.type !== "ESTUDENT") {
+          const response = await File.updateOne({ "userId": ObjectId(obj._id) }, {
+            $set: {
+              ...obj, userRef: `${obj?.type}-${makeRef(3)}`, profile: {
+                fullname: `${obj.firstname} ${obj.lastname}`, proEmail: obj.email
+              }
             }
+          }, { upsert: true })
+          logger.info(response)
+
+          if (response) {
+            logger.info("Executing wihout problems")
           }
-        }, { upsert: true })
-        logger.info(response)
-        if (response) {
-          logger.info("Executing wihout problems")
         }
         else {
           logger.info('Something went wrong')

@@ -30,7 +30,26 @@ module.exports.getEmployeeContractsWithSalary = async (req, res) => {
             '$or': query
         }
     })
+    let filterValue = ''
+    if (req.query?.filter) {
+        filterValue = req.query.filter
+        console.log(filterValue)
+        aggregation.unshift(
+            {
+                $match: {
+                    $or: [
+                        { status: { $regex: filterValue, $options: 'i' } },
+                        { contractType: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'user.profile.fullname': { $regex: filterValue, $options: 'i' } },
 
+
+
+                    ]
+                }
+            }
+        )
+    }
 
     logger.debug("Incomoing aggregation: ", aggregation);
 
@@ -79,6 +98,8 @@ module.exports.getAllContractsWithSalaries = async (req, res) => {
                     $or: [
                         { status: { $regex: filterValue, $options: 'i' } },
                         { contractType: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'user.profile.fullname': { $regex: filterValue, $options: 'i' } },
 
 
                     ]
@@ -96,6 +117,7 @@ module.exports.getAllContractsWithSalaries = async (req, res) => {
 
     )
 
+    // getting user ref with contract
     aggregation.unshift(
         {
             '$lookup': {
@@ -156,6 +178,74 @@ module.exports.getAllContractsWithSalaries = async (req, res) => {
     }
 }
 
+module.exports.getAllActiveContracts = async (req, res) => {
+
+    let aggregation = aggregationWithFacet(req, res)
+
+    aggregation.unshift(
+        {
+            '$lookup': {
+                'from': 'files',
+                'let': {
+                    'contractUserId': '$userId' // Id of the current file
+                },
+                // 'localField': '_id',
+                'pipeline': [
+                    {
+                        '$match': {
+                            '$expr': {
+                                '$and': [
+                                    {
+                                        '$eq': [
+                                            '$userId', '$$contractUserId'
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        '$project': {
+                            userRef: 1,
+                            profile: {
+                                fullname: 1
+                            }
+                        }
+                    }
+                ],
+                'as': 'user'
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$user"
+            }
+        },
+        {
+            '$match': {
+                enabled: true, status: "active"
+            }
+        }
+    )
+
+    try {
+        const allActive = await Contract.aggregate(aggregation)
+        return (allActive && allActive.length)
+            ? res.status(200).json({
+                response: allActive,
+                message: req.t("SUCCESS.RETRIEVED")
+            })
+            : res.status(404).json({
+                message: req.t("ERROR.NOT_FOUND")
+            })
+    } catch (error) {
+        logger.error(`Erroor in allactive =>${error.message}`);
+        return res.status(400).json({
+            message: req.t("ERROR.BAD_REQUEST")
+        })
+    }
+}
+
 module.exports.updateContractWithSalaries = async (req, res) => {
     const { salary, ...contractFields } = req.body
     const { _id, createdAt, updatedAt, ...salaryFields } = salary
@@ -165,6 +255,24 @@ module.exports.updateContractWithSalaries = async (req, res) => {
     try {
 
         for (var key in contractFields) {
+            // if (key == 'endDate' && new Date(req.body[key]) <= new Date()) {
+            //     console.log('shouldnt add endDate');
+            //     return res.status(400).json({
+            //         message: "End date can't be in the past."
+            //     })
+            // }
+            if (key == 'endDate' && new Date(req.body.endDate) <= new Date(req.body.startDate)) {
+                console.log(' endDate should be greater than start Date ☣️');
+                return res.status(400).json({
+                    message: "End Date should be greater than start Date."
+                })
+            }
+            if (key == 'hoursNumber' && (req.body[key] < 40 || req.body[key] > 48)) {
+                console.log('40 < hours number < 48');
+                return res.status(400).json({
+                    message: "Hours Number should be between 40 and 48."
+                })
+            }
             query[key] = req.body[key];
         }
         for (var key in salaryFields) {
@@ -204,7 +312,7 @@ module.exports.getActiveContract = async (req, res) => {
             );
     }
     catch (e) {
-        logger.error(`Error in getActiveContract() function: `, e.message)
+        logger.error(`Error in getActiveContract() function: ${e}`)
         return res.status(400).json({ message: req.t("ERROR.BAD_REQUEST") })
     }
 }
@@ -213,54 +321,74 @@ module.exports.getContractsByUserId = async (req, res) => {
     const userId = req.params.userId
     var aggregation = aggregationWithFacet(req, res);
 
-    try {
-        aggregation.unshift({
-            $match: {
-                userId: mongoose.Types.ObjectId(userId),
-                enabled: true
-            }
-        })
+    aggregation.unshift({
+        $match: {
+            userId: mongoose.Types.ObjectId(userId),
+            enabled: true
+        }
+    })
 
-        aggregation.unshift(
-            {
-                '$lookup': {
-                    'from': 'files',
-                    'let': {
-                        'contractUserId': '$userId'
-                    },
+    aggregation.unshift(
+        {
+            '$lookup': {
+                'from': 'files',
+                'let': {
+                    'contractUserId': '$userId'
+                },
 
-                    'pipeline': [
-                        {
-                            '$match': {
-                                '$expr': {
-                                    '$and': [
-                                        {
-                                            '$eq': [
-                                                '$userId', '$$contractUserId'
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            '$project': {
-                                userRef: 1,
-                                profile: {
-                                    fullname: 1
-                                }
+                'pipeline': [
+                    {
+                        '$match': {
+                            '$expr': {
+                                '$and': [
+                                    {
+                                        '$eq': [
+                                            '$userId', '$$contractUserId'
+                                        ]
+                                    }
+                                ]
                             }
                         }
-                    ],
-                    'as': 'user'
-                }
-            },
+                    },
+                    {
+                        '$project': {
+                            userRef: 1,
+                            profile: {
+                                fullname: 1
+                            }
+                        }
+                    }
+                ],
+                'as': 'user'
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$user"
+            }
+        }
+    )
+
+    let filterValue = ''
+    if (req.query?.filter) {
+        filterValue = req.query.filter
+        console.log(filterValue)
+        aggregation.unshift(
             {
-                "$unwind": {
-                    "path": "$user"
+                $match: {
+                    $or: [
+                        { status: { $regex: filterValue, $options: 'i' } },
+                        { contractType: { $regex: filterValue, $options: 'i' } },
+                        { 'user.userRef': { $regex: filterValue, $options: 'i' } },
+                        { 'user.profile.fullname': { $regex: filterValue, $options: 'i' } },
+
+
+                    ]
                 }
             }
         )
+    }
+    try {
 
 
         const contractsByUserId = await Contract.aggregate(aggregation);

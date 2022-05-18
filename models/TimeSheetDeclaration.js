@@ -18,8 +18,15 @@ const TimeSheetDeclarationSchema = Schema(
         },
         status: {
             type: String,
-            enum: ["declared", "approved", "rejected"],
+            maxLength: 200,
+            enum: { values: ["declared", "approved", "rejected"], message: "{VALUE} is not supported" },
             default: "declared",
+        },
+        declaredHours: {
+            type: Number
+        },
+        extraHours: {
+            type: Number
         },
         enabled: {
             type: Boolean,
@@ -29,16 +36,6 @@ const TimeSheetDeclarationSchema = Schema(
     },
     { timestamps: true }
 );
-
-
-// TimeSheetDeclarationSchema.pre('save', async function (next) {
-//     if (this.status === "Declared") {
-//         next(new Error('Cannot update active declarations'));
-//     } else {
-//         next();
-//     }
-// })
-
 
 
 const TimeSheetDeclaration = mongoose.model('TimeSheetDeclaration', TimeSheetDeclarationSchema);

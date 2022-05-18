@@ -5,6 +5,7 @@ const WorkFromSchema = Schema(
     {
         title: {
             type: String,
+            maxLength: 200,
             required: "This Field is Required"
         },
         enabled: {
